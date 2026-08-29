@@ -39,6 +39,11 @@ std::expected<Socket, Socket::Error> Socket::connect(std::string_view address,
       .sin_port = htons(port),
   };
 
+  if (::inet_pton(AF_INET, std::string{address}.c_str(), &addr.sin_addr) != 1) {
+    ::close(fd);
+    return std::unexpected(Error::BindFailed);
+  }
+
   if (::bind(fd, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)) < 0) {
     ::close(fd);
     return std::unexpected(Error::BindFailed);
