@@ -1,4 +1,4 @@
-#include "infrastructure/ThreadPool.hpp"
+#include "Infrastructure/ThreadPool.hpp"
 
 ThreadPool::ThreadPool(std::size_t threadCount) {
   const std::size_t workerCount = std::max<std::size_t>(1, threadCount);
