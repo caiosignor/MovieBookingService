@@ -11,10 +11,19 @@ enum class DatabaseError;
 
 class MovieScreening
 {
-    std::string movie_id{};
-    std::string theater_id{};
-    std::string movie_name{};
-    std::string theater_name{};
+public:
+    static std::shared_ptr<MovieScreening> create(
+        std::string movieId,
+        std::string theaterId,
+        std::string movieName,
+        std::string theaterName)
+    {
+        return std::make_shared<MovieScreening>(
+            std::move(movieId),
+            std::move(theaterId),
+            std::move(movieName),
+            std::move(theaterName));
+    }
 
     MovieScreening() = default;
 
@@ -30,18 +39,10 @@ class MovieScreening
     {
     }
 
-    static std::shared_ptr<MovieScreening> create(
-        std::string movieId,
-        std::string theaterId,
-        std::string movieName,
-        std::string theaterName)
-    {
-        return std::make_shared<MovieScreening>(
-            std::move(movieId),
-            std::move(theaterId),
-            std::move(movieName),
-            std::move(theaterName));
-    }
+    std::string movie_id{};
+    std::string theater_id{};
+    std::string movie_name{};
+    std::string theater_name{};
 };
 
 using MovieScreeningType = std::shared_ptr<MovieScreening>;

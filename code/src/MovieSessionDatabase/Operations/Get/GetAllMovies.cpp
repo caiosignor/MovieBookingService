@@ -4,6 +4,7 @@ GetAllMovies::GetAllMovies(std::span<MovieScreeningType> out)
     : m_data(out)
 {
     m_isFinished = false;
+    m_retCode = DatabaseError::OK;
 }
 
 void GetAllMovies::visit(MovieScreeningType movie)
@@ -16,4 +17,5 @@ void GetAllMovies::visit(MovieScreeningType movie)
     }
 
     m_data[m_dataIterator++] = movie;
+    m_retCode = DatabaseError::OK;
 }

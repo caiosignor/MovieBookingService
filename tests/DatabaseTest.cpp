@@ -20,7 +20,7 @@ void db_addAndGetMovie()
     constexpr std::string_view movieName = "The Dark Knight";
     constexpr std::string_view theaterName = "Cineplex";
 
-    auto movie = _MovieScreening::create(
+    auto movie = MovieScreening::create(
         std::string{movieId},
         std::string{theaterId},
         std::string{movieName},
