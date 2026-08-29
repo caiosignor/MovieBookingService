@@ -4,20 +4,21 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <iostream>
 
 class MovieSessionVisitor;
 enum class DatabaseError;
 
-struct _MovieScreening
+class MovieScreening
 {
     std::string movie_id{};
     std::string theater_id{};
     std::string movie_name{};
     std::string theater_name{};
 
-    _MovieScreening() = default;
+    MovieScreening() = default;
 
-    _MovieScreening(
+    MovieScreening(
         std::string movieId,
         std::string theaterId,
         std::string movieName,
@@ -29,13 +30,13 @@ struct _MovieScreening
     {
     }
 
-    static std::shared_ptr<_MovieScreening> create(
+    static std::shared_ptr<MovieScreening> create(
         std::string movieId,
         std::string theaterId,
         std::string movieName,
         std::string theaterName)
     {
-        return std::make_shared<_MovieScreening>(
+        return std::make_shared<MovieScreening>(
             std::move(movieId),
             std::move(theaterId),
             std::move(movieName),
@@ -43,13 +44,13 @@ struct _MovieScreening
     }
 };
 
-using MovieScreeningType = std::shared_ptr<_MovieScreening>;
+using MovieScreeningType = std::shared_ptr<MovieScreening>;
 
 class MovieSessionDatabase
 {
     friend class MovieSessionVisitor;
 public:
-    DatabaseError accept(MovieSessionVisitor& visitor);
+    void accept(MovieSessionVisitor& visitor);
     MovieSessionDatabase();
 
 private:

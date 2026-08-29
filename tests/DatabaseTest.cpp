@@ -1,7 +1,7 @@
 #include <array>
 #include <iostream>
 #include <string>
-
+#include <ranges>
 #include "AddMovie.hpp"
 #include "GetAllMovies.hpp"
 
@@ -13,26 +13,61 @@ void expect(bool condition, const std::string& message)
     }
 }
 
-void db_basicAddGetOperations()
+void db_addAndGetMovie()
 {
-    const std::string expectedName = "movie-id-1";
-    auto movie = _MovieScreening::create(
-        expectedName,
-        expectedName,
-        expectedName,
-        expectedName);
+    constexpr std::string_view movieId = "movie-id-1";
+    constexpr std::string_view theaterId = "theater-id-1";
+    constexpr std::string_view movieName = "The Dark Knight";
+    constexpr std::string_view theaterName = "Cineplex";
 
-    expect(AddMovie(std::move(movie)).Execute() == DatabaseError::OK,
-           "Fail to add data to database");
+    auto movie = _MovieScreening::create(
+        std::string{movieId},
+        std::string{theaterId},
+        std::string{movieName},
+        std::string{theaterName});
+
+    expect(movie->movie_id == "movie-id-1",
+       "Movie ID is incorrect after creation");
+
+    expect(movie->theater_id == "theater-id-1",
+        "Theater ID is incorrect after creation");
+
+    expect(movie->movie_name == "The Dark Knight",
+        "Movie name is incorrect after creation");
+
+    expect(movie->theater_name == "Cineplex",
+        "Theater name is incorrect after creation");
+
+    expect(movie != nullptr,
+           "Failed to create movie");
+
+    expect(
+        AddMovie(std::move(movie)).Execute() == DatabaseError::OK,
+        "Failed to add movie");
 
     std::array<MovieScreeningType, 20> movies{};
-    GetAllMovies getAll(movies);
 
-    expect(getAll.Execute() == DatabaseError::OK,
-           "Fail to get all movies database");
+    GetAllMovies getAll{movies};
 
-    expect(movies[0] != nullptr && movies[0]->movie_name == expectedName,
-           "Movie name differ from expected");
+    expect(
+        getAll.Execute() == DatabaseError::OK,
+        "Failed to get movies");
+
+    const auto result = movies[0];
+
+    expect(result != nullptr, "No movie was added");
+
+    expect(result->movie_id == movieId,
+           "Movie ID differs from expected");
+
+    expect(result->theater_id == theaterId,
+           "Theater ID differs from expected");
+
+    expect(result->movie_name == movieName,
+           "Movie name differs from expected");
+
+    expect(result->theater_name == theaterName,
+           "Theater name differs from expected");
 }
 
 void run(const char* name, void (*test)(), int& failures)
@@ -52,6 +87,6 @@ void run(const char* name, void (*test)(), int& failures)
 int main()
 {
     int failures = 0;
-    run("invalid bookings", db_basicAddGetOperations, failures);
+    run("invalid bookings", db_addAndGetMovie, failures);
     return failures == 0 ? 0 : 1;
 }

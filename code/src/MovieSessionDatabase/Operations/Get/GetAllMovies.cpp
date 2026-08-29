@@ -3,31 +3,17 @@
 GetAllMovies::GetAllMovies(std::span<MovieScreeningType> out)
     : m_data(out)
 {
+    m_isFinished = false;
 }
 
-[[nodiscard]]
-DatabaseError GetAllMovies::Execute()
+void GetAllMovies::visit(MovieScreeningType movie)
 {
-    for (auto& slot : m_data)
+    if (m_dataIterator >= m_data.size())
     {
-        slot = nullptr;
+        finish();
+        m_retCode = DatabaseError::OK;
+        return;
     }
 
-    if (!m_data.empty())
-    {
-        m_data[0] = std::make_unique<_MovieScreening>(
-            "movie-id-1",
-            "movie-id-1",
-            "movie-id-1",
-            "movie-id-1");
-    }
-
-    return DatabaseError::OK;
-}
-
-[[nodiscard]]
-DatabaseError GetAllMovies::visit(std::span<MovieScreeningType> movieslist)
-{
-    (void)movieslist;
-    return DatabaseError::OK;
+    m_data[m_dataIterator++] = movie;
 }

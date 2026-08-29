@@ -5,17 +5,15 @@ AddMovie::AddMovie(MovieScreeningType movie): m_data(std::move(movie))
 {
 }
 
-[[nodiscard]]
-DatabaseError AddMovie::visit(std::span<MovieScreeningType> movieslist)
+void AddMovie::visit(std::span<MovieScreeningType> movieslist)
 {
     for (auto& movie : movieslist)
     {
         if (!movie)
         {
             movie = std::move(m_data);
-            return DatabaseError::OK;
+            
+            m_retCode = DatabaseError::OK;
         }
     }
-
-    return DatabaseError::GenericError;
 }

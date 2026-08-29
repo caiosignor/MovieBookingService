@@ -14,6 +14,5 @@ public:
 private:
     MovieScreeningType m_data;
 
-    [[nodiscard]]
-    DatabaseError visit(std::span<MovieScreeningType> movieslist) override;
+    void visit(std::span<MovieScreeningType> movieslist) override;
 };

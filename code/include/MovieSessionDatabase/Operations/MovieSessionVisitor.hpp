@@ -14,6 +14,12 @@ public:
     [[nodiscard]]
     DatabaseError Execute();
 
-    [[nodiscard]]
-    virtual DatabaseError visit(std::span<MovieScreeningType> movieslist) = 0;
+    virtual void visit(std::span<MovieScreeningType> movieslist){(void)movieslist;}
+    virtual void visit(MovieScreeningType movie){(void)movie;}
+
+    bool isFinished()const {return m_isFinished;}
+    void finish() {m_isFinished = true;}
+protected:
+    bool m_isFinished{true};
+    DatabaseError m_retCode;
 };

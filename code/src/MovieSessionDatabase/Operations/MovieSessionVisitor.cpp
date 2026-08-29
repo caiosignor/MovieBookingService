@@ -4,5 +4,6 @@
 DatabaseError MovieSessionVisitor::Execute()
 {
     static MovieSessionDatabase database;
-    return database.accept(*this);
+    database.accept(*this);
+    return m_retCode;
 }

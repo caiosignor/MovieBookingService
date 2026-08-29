@@ -11,12 +11,8 @@ public:
     explicit GetAllMovies(std::span<MovieScreeningType> out);
     ~GetAllMovies() override = default;
 
-    [[nodiscard]]
-    DatabaseError Execute();
-
 private:
     std::span<MovieScreeningType> m_data;
-
-    [[nodiscard]]
-    DatabaseError visit(std::span<MovieScreeningType> movieslist) override;
+    size_t m_dataIterator{0};
+    void visit(MovieScreeningType movie) override;
 };
