@@ -45,7 +45,7 @@ void db_addAndGetMovie()
         AddMovie(std::move(movie)).Execute() == DatabaseError::OK,
         "Failed to add movie");
 
-    std::array<MovieScreeningPtrType, 20> movies{};
+    std::array<MovieScreening, 20> movies{};
 
     GetAllMovies getAll{movies};
 
@@ -55,18 +55,16 @@ void db_addAndGetMovie()
 
     const auto result = movies[0];
 
-    expect(result != nullptr, "No movie was added");
-
-    expect(result->movie_id == movieId,
+    expect(result.movie_id == movieId,
            "Movie ID differs from expected");
 
-    expect(result->theater_id == theaterId,
+    expect(result.theater_id == theaterId,
            "Theater ID differs from expected");
 
-    expect(result->movie_name == movieName,
+    expect(result.movie_name == movieName,
            "Movie name differs from expected");
 
-    expect(result->theater_name == theaterName,
+    expect(result.theater_name == theaterName,
            "Theater name differs from expected");
 }
 

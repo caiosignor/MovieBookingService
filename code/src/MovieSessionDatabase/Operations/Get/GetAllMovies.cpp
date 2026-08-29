@@ -1,6 +1,6 @@
 #include "GetAllMovies.hpp"
 
-GetAllMovies::GetAllMovies(std::span<MovieScreeningPtrType> out)
+GetAllMovies::GetAllMovies(std::span<MovieScreening> out)
     : m_data(out)
 {
     m_isFinished = false;
@@ -16,6 +16,6 @@ void GetAllMovies::visit(MovieScreeningPtrType movie)
         return;
     }
 
-    m_data[m_dataIterator++] = movie;
+    m_data[m_dataIterator++] = *movie;
     m_retCode = DatabaseError::OK;
 }

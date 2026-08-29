@@ -8,11 +8,11 @@
 class GetAllMovies : public MovieSessionVisitor
 {
 public:
-    explicit GetAllMovies(std::span<MovieScreeningPtrType> out);
+    explicit GetAllMovies(std::span<MovieScreening> out);
     ~GetAllMovies() override = default;
 
 private:
-    std::span<MovieScreeningPtrType> m_data;
+    std::span<MovieScreening> m_data;
     size_t m_dataIterator{0};
     void visit(MovieScreeningPtrType movie) override;
 };
