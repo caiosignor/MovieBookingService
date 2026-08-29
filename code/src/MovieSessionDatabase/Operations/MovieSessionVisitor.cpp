@@ -4,6 +4,12 @@
 DatabaseError MovieSessionVisitor::Execute()
 {
     static MovieSessionDatabase database;
-    database.accept(*this);
+    return Execute(database);
+}
+
+[[nodiscard]]
+DatabaseError MovieSessionVisitor::Execute(MovieSessionDatabase& instance)
+{
+    instance.accept(*this);
     return m_retCode;
 }

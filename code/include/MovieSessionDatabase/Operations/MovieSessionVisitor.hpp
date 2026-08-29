@@ -14,6 +14,9 @@ public:
     [[nodiscard]]
     DatabaseError Execute();
 
+    [[nodiscard]]
+    DatabaseError Execute(MovieSessionDatabase& instance);
+
     virtual void visit(std::span<MovieScreeningPtrType> movieslist){(void)movieslist;}
     virtual void visit(MovieScreeningPtrType movie){(void)movie;}
 
