@@ -2,8 +2,10 @@
 #include <iostream>
 #include <string>
 #include <ranges>
+#include <format>
 #include "AddMovie.hpp"
 #include "GetAllMovies.hpp"
+#include "GetAllTheaterShowingTheMovie.hpp"
 
 void expect(bool condition, const std::string& message)
 {
@@ -68,6 +70,18 @@ void db_addAndGetMovie()
            "Theater name differs from expected");
 }
 
+void db_GetAllTheaterShowingTheMovie()
+{
+    constexpr std::string_view movieName = "The Dark Knight";
+    constexpr std::string_view theaterName = "Cineplex";
+
+    std::array<std::string, 20> theaters;
+    expect(GetAllTheaterShowingTheMovie(movieName, theaters).Execute() == DatabaseError::OK, "Not found a theater");
+    
+    const auto result = theaters[0];
+    expect(result == theaterName, std::format("Theather Name differ from expected. Expected({}) Found({})", theaterName, result));
+
+}
 void run(const char* name, void (*test)(), int& failures)
 {
     try
@@ -85,6 +99,7 @@ void run(const char* name, void (*test)(), int& failures)
 int main()
 {
     int failures = 0;
-    run("invalid bookings", db_addAndGetMovie, failures);
+    run("Simple add and get operations", db_addAndGetMovie, failures);
+    run("Getting all theaters showing the movie", db_GetAllTheaterShowingTheMovie, failures);
     return failures == 0 ? 0 : 1;
 }

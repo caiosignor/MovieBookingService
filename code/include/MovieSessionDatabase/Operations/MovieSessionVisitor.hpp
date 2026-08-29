@@ -4,7 +4,7 @@
 
 #include "MovieSessionDatabase.hpp"
 
-enum class DatabaseError { OK, NotFound, GenericError };
+enum class DatabaseError { OK, NotFound, OutOfMemory, GenericError };
 
 class MovieSessionVisitor
 {
