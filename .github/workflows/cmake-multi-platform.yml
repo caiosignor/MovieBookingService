@@ -1,58 +1,59 @@
 name: C++ Build and Test
 
 on:
-push:
-branches:
-  - main
-pull_request:
-branches:
-  - main
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
 
 jobs:
-build-and-test:
-name: ${{ matrix.name }}
-runs-on: ${{ matrix.os }}
+  build-and-test:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
 
-strategy:
-  fail-fast: false
-  matrix:
-    include:
-      - name: Linux GCC
-        os: ubuntu-latest
-        c_compiler: gcc
-        cpp_compiler: g++
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux GCC
+            os: ubuntu-latest
+            c_compiler: gcc
+            cpp_compiler: g++
 
-      - name: Linux Clang
-        os: ubuntu-latest
-        c_compiler: clang
-        cpp_compiler: clang++
+          - name: Linux Clang
+            os: ubuntu-latest
+            c_compiler: clang
+            cpp_compiler: clang++
 
-      - name: macOS Apple Clang
-        os: macos-latest
-        c_compiler: clang
-        cpp_compiler: clang++
+          - name: macOS Apple Clang
+            os: macos-latest
+            c_compiler: clang
+            cpp_compiler: clang++
 
-      - name: Windows MSVC
-        os: windows-latest
-        c_compiler: cl
-        cpp_compiler: cl
+          - name: Windows MSVC
+            os: windows-latest
+            c_compiler: cl
+            cpp_compiler: cl
 
-steps:
-  - name: Checkout
-    uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  - name: Configure CMake
-    run: >
-      cmake
-      -S .
-      -B build
-      -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
-      -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-      -DCMAKE_BUILD_TYPE=Release
-      -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      - name: Configure CMake
+        run: >
+          cmake
+          -S .
+          -B build
+          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
-  - name: Build
-    run: cmake --build build --config Release --parallel
+      - name: Build
+        run: cmake --build build --config Release --parallel
 
-  - name: Test
-    run: ctest --test-dir build --build-config Release --output-on-failure
+      - name: Test
+        run: ctest --test-dir build --build-config Release --output-on-failure
