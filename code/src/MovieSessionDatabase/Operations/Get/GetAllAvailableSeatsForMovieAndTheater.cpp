@@ -9,14 +9,14 @@ GetAllAvailableSeatsForMovieAndTheater::GetAllAvailableSeatsForMovieAndTheater(s
 
 void GetAllAvailableSeatsForMovieAndTheater::visit(MovieScreeningPtrType movie)
 {
-    if (m_dataIterator > m_outData.size())
+    if (m_dataIterator >= m_outData.size())
     {
         finish();
         m_retCode = DatabaseError::OutOfMemory;
         return;
     }
 
-    if(movie->movie_name == m_movieName && movie->theater_name == m_theaterName)
+    if(movie->movie_name.compare(m_movieName) == 0 && movie->theater_name.compare(m_theaterName) ==0)
     {
         for(const auto& [seat, isfree] : movie->m_availableSeats)
         {
