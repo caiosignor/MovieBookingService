@@ -16,7 +16,7 @@ void GetAllTheaterShowingTheMovie::visit(MovieScreeningPtrType movie)
         return;
     }
 
-    if(movie->movie_name == m_movieName)
+    if(movie->movie_name.compare(m_movieName) == 0)
     {
         m_outData[m_dataIterator++] = movie->theater_name;
         m_retCode = DatabaseError::OK;

@@ -68,6 +68,10 @@ public:
     void accept(MovieSessionVisitor &visitor);
     MovieSessionDatabase();
 
+    size_t getScreeningCount() const {
+        return m_screeningMovies.size();
+    }
+
 private:
     static constexpr std::size_t DATABASE_CAPACITY = 20;
     std::vector<MovieScreeningPtrType> m_screeningMovies;

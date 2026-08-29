@@ -20,104 +20,174 @@ void expect(bool condition, const std::string& message)
     }
 }
 
+void movieScreeningBuilder()
+{
+    auto movie = MovieScreening::create(
+        std::string{TestData::MovieName},
+        std::string{TestData::TheaterName});
+
+    expect(movie != nullptr, "Failed to create movie");
+
+    expect(movie->movie_name.compare(TestData::MovieName) == 0, "Movie name is incorrect after creation");
+    expect(movie->theater_name.compare(TestData::TheaterName) == 0, "Theater name is incorrect after creation");
+}
+
 void db_addAndGetMovie()
 {
-    constexpr std::string_view movieName = "The Dark Knight";
-    constexpr std::string_view theaterName = "Cineplex";
+    MovieSessionDatabase dbInstance;
+
+    for(auto& [movieName, theaterName] : TestData::Movies)
+    {
+        auto movie = MovieScreening::create(
+            std::string{movieName},
+            std::string{theaterName}
+        );
+        AddMovie operation(movie);
+        expect(operation.Execute(dbInstance) == DatabaseError::OK, "Failed to add movie!");
+    }
+
+    //get all movies from database
+    std::array<MovieScreening, 20> movies{};
+    GetAllMovies getAllOperation{movies};
+    expect(getAllOperation.Execute() == DatabaseError::OK, "Failed to get movies from database");
+
+    auto firstMovie = movies[0];
+    expect(firstMovie.movie_name.compare(TestData::MovieName),
+        std::format("Retrieved different movie name from database. Expected{} Current{}",TestData::MovieName, firstMovie.movie_name));
+
+    expect(firstMovie.theater_name.compare(TestData::TheaterName),
+        std::format("Retrieved different movie name from database. Expected{} Current{}",TestData::TheaterName, firstMovie.theater_name));
 
     auto movie = MovieScreening::create(
-        std::string{movieName},
-        std::string{theaterName});
+        "Extra Movie",
+        "Extra theater"
+    );
 
-    expect(movie->movie_name == "The Dark Knight",
-        "Movie name is incorrect after creation");
+    AddMovie operation(movie);
+    expect(operation.Execute(dbInstance) == DatabaseError::OutOfMemory, "The software accessed invalid memory on add operation");
 
-    expect(movie->theater_name == "Cineplex",
-        "Theater name is incorrect after creation");
+    std::array<MovieScreening, 10> smaller_movies_list{};
+    expect(GetAllMovies(smaller_movies_list).Execute(dbInstance) == DatabaseError::OutOfMemory, "The software accessed invalid memory on get operation");
+}
 
-    expect(movie != nullptr,
-           "Failed to create movie");
+void db_memoryProtectionWhenAddAndGet()
+{
+     MovieSessionDatabase dbInstance;
 
-    expect(
-        AddMovie(std::move(movie)).Execute() == DatabaseError::OK,
-        "Failed to add movie");
+    for(auto& [movieName, theaterName] : TestData::Movies)
+    {
+        auto movie = MovieScreening::create(
+            std::string{movieName},
+            std::string{theaterName}
+        );
+        AddMovie operation(movie);
+        expect(operation.Execute(dbInstance) == DatabaseError::OK, "Failed to add movie!");
+    }
 
-    std::array<MovieScreening, 20> movies{};
+    auto movie = MovieScreening::create(
+        "Extra Movie",
+        "Extra theater"
+    );
 
-    GetAllMovies getAll{movies};
+    AddMovie operation(movie);
+    expect(operation.Execute(dbInstance) == DatabaseError::OutOfMemory, "The software accessed invalid memory on add operation");
 
-    expect(
-        getAll.Execute() == DatabaseError::OK,
-        "Failed to get movies");
+    constexpr size_t movies_count = TestData::Movies.size();
 
-    const auto result = movies[0];
-
-    expect(result.movie_name == movieName,
-           "Movie name differs from expected");
-
-    expect(result.theater_name == theaterName,
-           "Theater name differs from expected");
+    std::array<MovieScreening, movies_count/2> smaller_movies_list{};
+    expect(GetAllMovies(smaller_movies_list).Execute(dbInstance) == DatabaseError::OutOfMemory, "The software accessed invalid memory on get operation");
 }
 
 void db_GetAllTheaterShowingTheMovie()
 {
-    constexpr std::string_view movieName = "The Dark Knight";
-    constexpr std::string_view theaterName = "Cineplex";
+    MovieSessionDatabase dbInstance;
 
-    std::array<std::string, 20> theaters;
-    expect(GetAllTheaterShowingTheMovie(movieName, theaters).Execute() == DatabaseError::OK, "Not found a theater");
+    for(auto& [movieName, theaterName] : TestData::Movies)
+    {
+        auto movie = MovieScreening::create(
+            std::string{movieName},
+            std::string{theaterName}
+        );
+        AddMovie operation(movie);
+        expect(operation.Execute(dbInstance) == DatabaseError::OK, "Failed to add movie!");
+    }
+
+    constexpr size_t numberOfMovies = TestData::Movies.size();
+    std::array<std::string, numberOfMovies> theaters;
+
+    expect(GetAllTheaterShowingTheMovie(TestData::MovieName, theaters).Execute(dbInstance) == DatabaseError::OK,
+        std::format("Not found a theater showing {}", TestData::MovieName));
+
     
-    const auto result = theaters[0];
-    expect(result == theaterName, std::format("Theather Name differ from expected. Expected({}) Found({})", theaterName, result));
+    int numberOfTheater = std::count_if(theaters.begin(), theaters.end(), [](const std::string& s){
+        return !s.empty();
+    });
+        
+    expect(numberOfTheater == 2,
+        std::format("there are currently 2 theaters showing {}, number of theaters {}", TestData::MovieName, numberOfTheater));
 
 }
 
 void db_getAllAvailableSeats()
 {
-    constexpr std::string_view movieName = "The Dark Knight";
-    constexpr std::string_view theaterName = "Cineplex";
-
+    MovieSessionDatabase dbInstance;
     auto movie = MovieScreening::create(
-        std::string{movieName},
-        std::string{theaterName});
+        std::string{TestData::MovieName},
+        std::string{TestData::TheaterName});
 
-    // Adiciona movie à database...
+    AddMovie operation(movie);
+    expect(operation.Execute(dbInstance) == DatabaseError::OK, "Failed to add movie!");
 
     std::array<std::string, 20> seats{};
 
-    GetAllAvailableSeatsForMovieAndTheater operation{
-        movieName,
-        theaterName,
+    GetAllAvailableSeatsForMovieAndTheater query{
+        TestData::MovieName,
+        TestData::TheaterName,
         seats};
 
     expect(
-        operation.Execute() == DatabaseError::OK,
+        query.Execute(dbInstance) == DatabaseError::OK,
         "Failed to get available seats");
 
-    auto containsSeat = [&](std::string_view expected)
-    {
-        return std::ranges::any_of(
-            seats,
-            [expected](const auto& seat)
-            {
-                return seat == expected;
-            });
-    }
-    ;
-    for (const auto& [seat, available] : movie->m_availableSeats)
-    {
-        expect(containsSeat(seat), "Test setup contains unavailable seat");
-    }
 
+    for (auto seat : TestData::AllSeats)
+    {
+        auto it = std::find(seats.begin(), seats.end(), seat);
+        expect(it != seats.end(), std::format("Seat {} not found", seat));
+    }
 }
 
 void db_bookaSeat()
 {
-    constexpr std::string_view movieName = "The Dark Knight";
-    constexpr std::string_view theaterName = "Cineplex";
+    MovieSessionDatabase dbInstance;
+    auto movie = MovieScreening::create(
+        std::string{TestData::MovieName},
+        std::string{TestData::TheaterName});
 
-    expect(BookSeatForMovieAndTheater(movieName, theaterName, TestData::RequestedSeats).Execute() == DatabaseError::OK, "Failed to book a seat");
-    expect(BookSeatForMovieAndTheater(movieName, theaterName, TestData::RequestedSeats).Execute() == DatabaseError::SeatUnavailable, "Seat should be unavailable at this stage. Already occupied by previous step");
+    AddMovie operation(movie);
+    expect(operation.Execute(dbInstance) == DatabaseError::OK, "Failed to add movie!");
+    
+    BookSeatForMovieAndTheater bookRequeat(TestData::MovieName, TestData::TheaterName, TestData::RequestedSeats);
+
+    expect(bookRequeat.Execute(dbInstance) == DatabaseError::OK, "Failed to book a seat");
+
+    BookSeatForMovieAndTheater secondBookRequest(TestData::MovieName, TestData::TheaterName, TestData::RequestedSeats);
+    expect(secondBookRequest.Execute(dbInstance) == DatabaseError::SeatUnavailable, "Seat should be unavailable at this stage. Already occupied by previous step");
+
+    std::array<std::string, 20> seats{};
+
+    GetAllAvailableSeatsForMovieAndTheater query{
+        TestData::MovieName,
+        TestData::TheaterName,
+        seats};
+
+    expect(query.Execute(dbInstance) == DatabaseError::OK, "Failed to get available seats");
+
+    for (auto seat : TestData::RequestedSeats)
+    {
+        auto it = std::find(seats.begin(), seats.end(), seat);
+        expect(it == seats.end(), std::format("The list of available seats shall not contain {}", seat));
+    }
 }
 
 void run(const char* name, void (*test)(), int& failures)
@@ -137,6 +207,9 @@ void run(const char* name, void (*test)(), int& failures)
 int main()
 {
     int failures = 0;
+
+    run("Test Visitor memory protection", db_memoryProtectionWhenAddAndGet, failures);
+    run("Test MovieScreening object builder", movieScreeningBuilder, failures);
     run("Simple add and get operations", db_addAndGetMovie, failures);
     run("Getting all theaters showing the movie", db_GetAllTheaterShowingTheMovie, failures);
     run("Getting all available seats for the movie", db_getAllAvailableSeats, failures);

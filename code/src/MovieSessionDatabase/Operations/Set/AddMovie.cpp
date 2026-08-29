@@ -12,8 +12,13 @@ void AddMovie::visit(std::span<MovieScreeningPtrType> movieslist)
         if (!movie)
         {
             movie = std::move(m_data);
-            
             m_retCode = DatabaseError::OK;
+            finish();
+            return;
         }
     }
+
+    m_retCode = DatabaseError::OutOfMemory;
+    finish();
+    return;
 }

@@ -12,7 +12,7 @@ void GetAllMovies::visit(MovieScreeningPtrType movie)
     if (m_dataIterator >= m_data.size())
     {
         finish();
-        m_retCode = DatabaseError::OK;
+        m_retCode = DatabaseError::OutOfMemory;
         return;
     }
 
