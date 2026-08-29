@@ -120,6 +120,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: false
+          load: true
           tags: movie-booking-service:ci
 
       - name: Smoke test container
