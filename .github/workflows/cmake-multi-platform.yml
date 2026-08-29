@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-
   pull_request:
     branches:
       - main
@@ -18,42 +17,110 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Linux GCC
+          - name: Linux GCC 14
             os: ubuntu-latest
-            c_compiler: gcc
-            cpp_compiler: g++
-
+            compiler: gcc
           - name: Linux Clang
             os: ubuntu-latest
-            c_compiler: clang
-            cpp_compiler: clang++
-
+            compiler: clang
           - name: macOS Apple Clang
             os: macos-latest
-            c_compiler: clang
-            cpp_compiler: clang++
-
+            compiler: apple-clang
           - name: Windows MSVC
             os: windows-latest
-            c_compiler: cl
-            cpp_compiler: cl
+            compiler: msvc
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure CMake
-        run: >
-          cmake
-          -S .
-          -B build
-          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
-          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-          -DCMAKE_BUILD_TYPE=Release
-          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      - name: Install GCC 14
+        if: matrix.compiler == 'gcc'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-14 g++-14
+
+      - name: Configure GCC 14
+        if: matrix.compiler == 'gcc'
+        run: |
+          cmake \
+            -S . \
+            -B build \
+            -DCMAKE_C_COMPILER=gcc-14 \
+            -DCMAKE_CXX_COMPILER=g++-14 \
+            -DCMAKE_CXX_STANDARD=23 \
+            -DCMAKE_CXX_STANDARD_REQUIRED=ON \
+            -DCMAKE_CXX_EXTENSIONS=OFF \
+            -DCMAKE_BUILD_TYPE=Release
+
+      - name: Configure Clang
+        if: matrix.compiler == 'clang'
+        run: |
+          cmake \
+            -S . \
+            -B build \
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DCMAKE_CXX_STANDARD=23 \
+            -DCMAKE_CXX_STANDARD_REQUIRED=ON \
+            -DCMAKE_CXX_EXTENSIONS=OFF \
+            -DCMAKE_BUILD_TYPE=Release
+
+      - name: Show Apple Clang version
+        if: matrix.compiler == 'apple-clang'
+        run: |
+          clang --version
+          clang++ --version
+          cmake --version
+
+      - name: Configure macOS
+        if: matrix.compiler == 'apple-clang'
+        run: |
+          cmake \
+            -S . \
+            -B build \
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DCMAKE_CXX_STANDARD=23 \
+            -DCMAKE_CXX_STANDARD_REQUIRED=ON \
+            -DCMAKE_CXX_EXTENSIONS=OFF \
+            -DCMAKE_BUILD_TYPE=Release
+
+      - name: Configure MSVC
+        if: matrix.compiler == 'msvc'
+        shell: bash
+        run: |
+          cmake \
+            -S . \
+            -B build \
+            -DCMAKE_CXX_STANDARD=23 \
+            -DCMAKE_CXX_STANDARD_REQUIRED=ON \
+            -DCMAKE_CXX_EXTENSIONS=OFF
 
       - name: Build
         run: cmake --build build --config Release --parallel
 
       - name: Test
         run: ctest --test-dir build --build-config Release --output-on-failure
+
+  docker-build:
+    name: Docker build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: movie-booking-service:ci
+
+      - name: Smoke test container
+        run: docker run --rm movie-booking-service:ci

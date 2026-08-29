@@ -4,7 +4,6 @@
 # ─────────────────────────────────────────────────────────────────────────────
 FROM gcc:14-bookworm AS builder
 
-# Instala CMake e Ninja (versões recentes via apt)
 RUN apt-get update && apt-get install -y --no-install-recommends \
         cmake \
         ninja-build \
@@ -12,17 +11,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /src
 
-# Copia apenas os manifestos de build primeiro (melhor cache)
 COPY CMakeLists.txt .
-COPY src/CMakeLists.txt src/
+COPY code/CMakeLists.txt code/
 COPY tests/CMakeLists.txt tests/
+COPY code/ code/
+COPY tests/ tests/
 
-# Copia o código-fonte e headers
-COPY src/    src/
-COPY include/ include/
-COPY tests/  tests/
-
-# Configura e compila em Release
 RUN cmake -S . -B build \
         -G Ninja \
         -DCMAKE_BUILD_TYPE=Release \
@@ -30,27 +24,23 @@ RUN cmake -S . -B build \
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Stage 2 — tester
-# Roda a suíte de testes registrada no CTest. Uma falha interrompe o build de CI.
+# Roda a suíte de testes registrada no CTest
 # ─────────────────────────────────────────────────────────────────────────────
 FROM builder AS tester
 
 WORKDIR /src/build
-
 RUN ctest --output-on-failure --test-dir /src/build
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Stage 3 — runtime
-# Imagem mínima: apenas o binário copiado do builder.
+# Imagem mínima: executável do build compilado
 # ─────────────────────────────────────────────────────────────────────────────
 FROM debian:bookworm-slim AS runtime
 
-# Usuário não-root para segurança
-RUN useradd --no-create-home --shell /bin/false appuser
-USER appuser
+RUN apt-get update && apt-get install -y --no-install-recommends libstdc++6 \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+COPY --from=builder /src/build/bin/BookingServiceExecutable ./BookingServiceExecutable
 
-# Copia apenas o executável compilado do stage builder
-COPY --from=builder /src/build/bin/TheaterBookingSoftware .
-
-ENTRYPOINT ["./TheaterBookingSoftware"]
+ENTRYPOINT ["./BookingServiceExecutable"]
