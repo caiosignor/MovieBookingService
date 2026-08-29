@@ -1,7 +1,7 @@
 #include "BookSeatForMovieAndTheater.hpp"
 #include <span>
 
-BookSeatForMovieAndTheater::BookSeatForMovieAndTheater(std::string_view movie,std::string_view theater, std::span<std::string_view> requestedSeats):
+BookSeatForMovieAndTheater::BookSeatForMovieAndTheater(const std::string_view movie, const std::string_view theater, std::span<const std::string_view> requestedSeats):
     m_movie(movie), m_theater(theater), m_requestedSeat(requestedSeats)
 {
     m_isFinished = false;

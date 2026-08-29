@@ -9,6 +9,7 @@
 #include "GetAllTheaterShowingTheMovie.hpp"
 #include "GetAllAvailableSeatsForMovieAndTheater.hpp"
 #include "BookSeatForMovieAndTheater.hpp"
+#include "DatabaseTestData.hpp"
 
 
 void expect(bool condition, const std::string& message)
@@ -115,14 +116,8 @@ void db_bookaSeat()
     constexpr std::string_view movieName = "The Dark Knight";
     constexpr std::string_view theaterName = "Cineplex";
 
-    auto seats = std::to_array<std::string_view>({
-        "A1",
-        "A2",
-        "A3"
-    });
-
-    expect(BookSeatForMovieAndTheater(movieName, theaterName, seats).Execute() == DatabaseError::OK, "Failed to book a seat");
-    expect(BookSeatForMovieAndTheater(movieName, theaterName, seats).Execute() == DatabaseError::SeatUnavailable, "Seat should be unavailable at this stage. Already occupied by previous step");
+    expect(BookSeatForMovieAndTheater(movieName, theaterName, TestData::RequestedSeats).Execute() == DatabaseError::OK, "Failed to book a seat");
+    expect(BookSeatForMovieAndTheater(movieName, theaterName, TestData::RequestedSeats).Execute() == DatabaseError::SeatUnavailable, "Seat should be unavailable at this stage. Already occupied by previous step");
 }
 
 void run(const char* name, void (*test)(), int& failures)
