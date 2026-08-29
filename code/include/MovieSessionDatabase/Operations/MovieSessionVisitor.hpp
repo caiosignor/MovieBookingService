@@ -1,11 +1,13 @@
 #pragma once
-#include "MovieSessionDatabase.hpp"
 
 #include <span>
-enum class DatabaseError {OK, NotFound, GenericError};
+
+#include "MovieSessionDatabase.hpp"
+
+enum class DatabaseError { OK, NotFound, GenericError };
 
 class MovieSessionVisitor
-{        
+{
 public:
     [[nodiscard]]
     DatabaseError Execute();
@@ -13,6 +15,4 @@ public:
 private:
     [[nodiscard]]
     virtual DatabaseError visit(std::span<MovieScreeningType> movieslist) = 0;
-
-
 };

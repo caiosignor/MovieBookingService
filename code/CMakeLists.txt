@@ -13,11 +13,21 @@ else()
     add_library(BookingServiceCore INTERFACE)
 endif()
 
+set(BOOKING_SERVICE_INCLUDE_DIRS
+    "${CMAKE_SOURCE_DIR}/code/include"
+    "${CMAKE_SOURCE_DIR}/code/include/MovieSessionDatabase"
+    "${CMAKE_SOURCE_DIR}/code/include/MovieSessionDatabase/Operations"
+    "${CMAKE_SOURCE_DIR}/code/include/MovieSessionDatabase/Operations/Set"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/MovieSessionDatabase"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/MovieSessionDatabase/Operations"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/MovieSessionDatabase/Operations/Set"
+)
+
 if(BOOKING_SERVICE_CORE_SOURCES)
     target_include_directories(BookingServiceCore
         PUBLIC
-            "${CMAKE_SOURCE_DIR}/code/include"
-            "${CMAKE_CURRENT_SOURCE_DIR}/src"
+            ${BOOKING_SERVICE_INCLUDE_DIRS}
     )
     target_compile_features(BookingServiceCore PUBLIC cxx_std_23)
     target_link_libraries(BookingServiceCore
@@ -28,8 +38,7 @@ if(BOOKING_SERVICE_CORE_SOURCES)
 else()
     target_include_directories(BookingServiceCore
         INTERFACE
-            "${CMAKE_SOURCE_DIR}/code/include"
-            "${CMAKE_CURRENT_SOURCE_DIR}/src"
+            ${BOOKING_SERVICE_INCLUDE_DIRS}
     )
     target_compile_features(BookingServiceCore INTERFACE cxx_std_23)
     target_link_libraries(BookingServiceCore

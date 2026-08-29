@@ -1,4 +1,4 @@
-#include "MovieSessionDatabase/MovieSessionVisitor.hpp"
+#include "MovieSessionVisitor.hpp"
 
 [[nodiscard]]
 DatabaseError MovieSessionVisitor::visit(std::span<MovieScreeningType> movieslist)

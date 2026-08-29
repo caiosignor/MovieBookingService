@@ -1,12 +1,18 @@
 #pragma once
+
+#include <span>
+#include <utility>
+
 #include "MovieSessionVisitor.hpp"
 
-class AddMovie : MovieSessionVisitor {
+class AddMovie : public MovieSessionVisitor
+{
 public:
-    AddMovie(MovieScreeningType movie);
+    explicit AddMovie(MovieScreeningType movie);
+
 private:
     MovieScreeningType m_data;
 
     [[nodiscard]]
-    virtual DatabaseError visit(std::span<MovieScreeningType> movieslist) = 0;
-}
+    DatabaseError visit(std::span<MovieScreeningType> movieslist) override;
+};
