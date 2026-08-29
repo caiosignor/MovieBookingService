@@ -1,25 +1,22 @@
 #include <iostream>
+#include "AddMovie.hpp"
 
 void expect(bool condition, const std::string &message) {
   if (!condition) throw std::runtime_error(message);
 }
 
 void db_basicAddGetOperations() {
+
+    MovieScreeningType movie = std::make_unique<struct _MovieScreening>(
+        "movie-id-1",
+        "movie-id-1",
+        "movie-id-1",
+        "movie-id-1"
+    );
+
+    expect(AddMovie(std::move(movie)).Execute() == DatabaseError::OK, "Fail to add data to database");
     
-//   const auto screening = makeScreening();
-//   const std::vector<std::string> empty;
-//   expect(screening->bookSeats(empty).error == BookingError::EmptySeatRequest,
-//          "an empty booking must be rejected");
 
-//   const std::vector<std::string> duplicate{"A1", "A1"};
-//   expect(screening->bookSeats(duplicate).error == BookingError::DuplicateSeatRequest,
-//          "the same seat cannot appear twice");
-
-//   const std::vector<std::string> unknown{"Z9"};
-//   expect(screening->bookSeats(unknown).error == BookingError::SeatNotFound,
-//          "an unknown seat must be rejected");
-//   expect(screening->availableSeats().size() == Screening::SeatCapacity,
-//          "failed bookings must not change seats");
 }
 
 void run(const char *name, void (*test)(), int &failures) {

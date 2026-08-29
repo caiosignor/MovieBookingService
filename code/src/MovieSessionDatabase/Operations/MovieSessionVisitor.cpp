@@ -1,10 +1,8 @@
 #include "MovieSessionVisitor.hpp"
 
 [[nodiscard]]
-DatabaseError MovieSessionVisitor::visit(std::span<MovieScreeningType> movieslist)
+DatabaseError MovieSessionVisitor::Execute()
 {
     static MovieSessionDatabase database;
-    database.accept(*this);
-
-    return DatabaseError::OK;
+    return database.accept(*this);
 }

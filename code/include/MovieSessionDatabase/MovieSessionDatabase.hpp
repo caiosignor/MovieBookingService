@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+enum class DatabaseError;
+
 class MovieSessionVisitor;
 
 struct _MovieScreening
@@ -20,7 +22,7 @@ class MovieSessionDatabase
 {
     friend class MovieSessionVisitor;
 public:
-    void accept(MovieSessionVisitor& visitor);
+    DatabaseError accept(MovieSessionVisitor& visitor);
     MovieSessionDatabase();
 
 private:
