@@ -41,7 +41,8 @@ public:
     std::string theater_id{};
     std::string movie_name{};
     std::string theater_name{};
-    std::unordered_map<std::string, bool> m_seats{
+    //true means it is available, false otherwise
+    std::unordered_map<std::string, bool> m_availableSeats{
         {"A1", true},
         {"A2", true},
         {"A3", true},
