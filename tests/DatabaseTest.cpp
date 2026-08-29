@@ -45,7 +45,7 @@ void db_addAndGetMovie()
         AddMovie(std::move(movie)).Execute() == DatabaseError::OK,
         "Failed to add movie");
 
-    std::array<MovieScreeningType, 20> movies{};
+    std::array<MovieScreeningPtrType, 20> movies{};
 
     GetAllMovies getAll{movies};
 

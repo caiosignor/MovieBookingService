@@ -14,8 +14,8 @@ public:
     [[nodiscard]]
     DatabaseError Execute();
 
-    virtual void visit(std::span<MovieScreeningType> movieslist){(void)movieslist;}
-    virtual void visit(MovieScreeningType movie){(void)movie;}
+    virtual void visit(std::span<MovieScreeningPtrType> movieslist){(void)movieslist;}
+    virtual void visit(MovieScreeningPtrType movie){(void)movie;}
 
     bool isFinished() const { return m_isFinished; }
     void finish() { m_isFinished = true; }

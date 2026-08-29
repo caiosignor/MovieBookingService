@@ -45,7 +45,7 @@ public:
     std::string theater_name{};
 };
 
-using MovieScreeningType = std::shared_ptr<MovieScreening>;
+using MovieScreeningPtrType = std::shared_ptr<MovieScreening>;
 
 class MovieSessionDatabase
 {
@@ -56,5 +56,5 @@ public:
 
 private:
     static constexpr std::size_t DATABASE_CAPACITY = 20;
-    std::vector<MovieScreeningType> m_screeningMovies;
+    std::vector<MovieScreeningPtrType> m_screeningMovies;
 };

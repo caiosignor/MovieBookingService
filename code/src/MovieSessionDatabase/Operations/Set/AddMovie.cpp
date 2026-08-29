@@ -1,11 +1,11 @@
 #include "AddMovie.hpp"
 #include <span>
 
-AddMovie::AddMovie(MovieScreeningType movie): m_data(std::move(movie))
+AddMovie::AddMovie(MovieScreeningPtrType movie): m_data(std::move(movie))
 {
 }
 
-void AddMovie::visit(std::span<MovieScreeningType> movieslist)
+void AddMovie::visit(std::span<MovieScreeningPtrType> movieslist)
 {
     for (auto& movie : movieslist)
     {

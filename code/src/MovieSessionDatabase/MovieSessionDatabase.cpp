@@ -12,7 +12,7 @@ MovieSessionDatabase::MovieSessionDatabase()
 
 void MovieSessionDatabase::accept(MovieSessionVisitor& visitor)
 {
-    visitor.visit(std::span<MovieScreeningType>(m_screeningMovies.data(), m_screeningMovies.size()));
+    visitor.visit(std::span<MovieScreeningPtrType>(m_screeningMovies.data(), m_screeningMovies.size()));
 
     for(auto movie = m_screeningMovies.begin(); movie != m_screeningMovies.end() && !visitor.isFinished(); ++movie)
     {

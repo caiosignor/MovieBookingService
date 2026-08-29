@@ -1,13 +1,13 @@
 #include "GetAllMovies.hpp"
 
-GetAllMovies::GetAllMovies(std::span<MovieScreeningType> out)
+GetAllMovies::GetAllMovies(std::span<MovieScreeningPtrType> out)
     : m_data(out)
 {
     m_isFinished = false;
     m_retCode = DatabaseError::OK;
 }
 
-void GetAllMovies::visit(MovieScreeningType movie)
+void GetAllMovies::visit(MovieScreeningPtrType movie)
 {
     if (m_dataIterator >= m_data.size())
     {

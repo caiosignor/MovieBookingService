@@ -8,11 +8,11 @@
 class AddMovie : public MovieSessionVisitor
 {
 public:
-    explicit AddMovie(MovieScreeningType movie);
+    explicit AddMovie(MovieScreeningPtrType movie);
     ~AddMovie() override = default;
 
 private:
-    MovieScreeningType m_data;
+    MovieScreeningPtrType m_data;
 
-    void visit(std::span<MovieScreeningType> movieslist) override;
+    void visit(std::span<MovieScreeningPtrType> movieslist) override;
 };
