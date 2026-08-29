@@ -21,22 +21,12 @@ void expect(bool condition, const std::string& message)
 
 void db_addAndGetMovie()
 {
-    constexpr std::string_view movieId = "movie-id-1";
-    constexpr std::string_view theaterId = "theater-id-1";
     constexpr std::string_view movieName = "The Dark Knight";
     constexpr std::string_view theaterName = "Cineplex";
 
     auto movie = MovieScreening::create(
-        std::string{movieId},
-        std::string{theaterId},
         std::string{movieName},
         std::string{theaterName});
-
-    expect(movie->movie_id == "movie-id-1",
-       "Movie ID is incorrect after creation");
-
-    expect(movie->theater_id == "theater-id-1",
-        "Theater ID is incorrect after creation");
 
     expect(movie->movie_name == "The Dark Knight",
         "Movie name is incorrect after creation");
@@ -60,12 +50,6 @@ void db_addAndGetMovie()
         "Failed to get movies");
 
     const auto result = movies[0];
-
-    expect(result.movie_id == movieId,
-           "Movie ID differs from expected");
-
-    expect(result.theater_id == theaterId,
-           "Theater ID differs from expected");
 
     expect(result.movie_name == movieName,
            "Movie name differs from expected");
@@ -93,8 +77,6 @@ void db_getAllAvailableSeats()
     constexpr std::string_view theaterName = "Cineplex";
 
     auto movie = MovieScreening::create(
-        "movie-id-1",
-        "theater-id-1",
         std::string{movieName},
         std::string{theaterName});
 

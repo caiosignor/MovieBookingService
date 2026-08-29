@@ -14,14 +14,10 @@ class MovieScreening
 {
 public:
     static std::shared_ptr<MovieScreening> create(
-        std::string movieId,
-        std::string theaterId,
         std::string movieName,
         std::string theaterName)
     {
         return std::make_shared<MovieScreening>(
-            std::move(movieId),
-            std::move(theaterId),
             std::move(movieName),
             std::move(theaterName));
     }
@@ -29,16 +25,12 @@ public:
     MovieScreening() = default;
 
     MovieScreening(
-        std::string movieId,
-        std::string theaterId,
         std::string movieName,
         std::string theaterName)
-        : movie_id(std::move(movieId)), theater_id(std::move(theaterId)), movie_name(std::move(movieName)), theater_name(std::move(theaterName))
+        : movie_name(std::move(movieName)), theater_name(std::move(theaterName))
     {
     }
 
-    std::string movie_id{};
-    std::string theater_id{};
     std::string movie_name{};
     std::string theater_name{};
     //true means it is available, false otherwise
