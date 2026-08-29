@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 #include <iostream>
+#include <unordered_map>
 
 class MovieSessionVisitor;
 enum class DatabaseError;
@@ -32,10 +33,7 @@ public:
         std::string theaterId,
         std::string movieName,
         std::string theaterName)
-        : movie_id(std::move(movieId))
-        , theater_id(std::move(theaterId))
-        , movie_name(std::move(movieName))
-        , theater_name(std::move(theaterName))
+        : movie_id(std::move(movieId)), theater_id(std::move(theaterId)), movie_name(std::move(movieName)), theater_name(std::move(theaterName))
     {
     }
 
@@ -43,6 +41,28 @@ public:
     std::string theater_id{};
     std::string movie_name{};
     std::string theater_name{};
+    std::unordered_map<std::string, bool> m_seats{
+        {"A1", true},
+        {"A2", true},
+        {"A3", true},
+        {"A4", true},
+        {"A5", true},
+        {"B1", true},
+        {"B2", true},
+        {"B3", true},
+        {"B4", true},
+        {"B5", true},
+        {"C1", true},
+        {"C2", true},
+        {"C3", true},
+        {"C4", true},
+        {"C5", true},
+        {"D1", true},
+        {"D2", true},
+        {"D3", true},
+        {"D4", true},
+        {"D5", true}
+    };
 };
 
 using MovieScreeningPtrType = std::shared_ptr<MovieScreening>;
@@ -50,8 +70,9 @@ using MovieScreeningPtrType = std::shared_ptr<MovieScreening>;
 class MovieSessionDatabase
 {
     friend class MovieSessionVisitor;
+
 public:
-    void accept(MovieSessionVisitor& visitor);
+    void accept(MovieSessionVisitor &visitor);
     MovieSessionDatabase();
 
 private:
