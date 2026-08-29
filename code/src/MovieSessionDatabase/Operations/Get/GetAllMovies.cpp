@@ -9,7 +9,7 @@ GetAllMovies::GetAllMovies(std::span<MovieScreening> out)
 
 void GetAllMovies::visit(MovieScreeningPtrType movie)
 {
-    if (m_dataIterator > m_data.size())
+    if (m_dataIterator >= m_data.size())
     {
         finish();
         m_retCode = DatabaseError::OutOfMemory;
