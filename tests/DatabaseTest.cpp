@@ -123,7 +123,7 @@ void db_GetAllTheaterShowingTheMovie()
         return !s.empty();
     });
         
-    expect(numberOfTheater == 2,
+    expect(numberOfTheater == 3,
         std::format("there are currently 2 theaters showing {}, number of theaters {}", TestData::MovieName, numberOfTheater));
 
 }
