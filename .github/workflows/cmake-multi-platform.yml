@@ -13,7 +13,6 @@ build-and-test:
 name: ${{ matrix.name }}
 runs-on: ${{ matrix.os }}
 
-```
 strategy:
   fail-fast: false
 
@@ -58,4 +57,3 @@ steps:
 
   - name: Test
     run: ctest --test-dir build --build-config Release --output-on-failure
-```
