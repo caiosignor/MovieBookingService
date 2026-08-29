@@ -8,7 +8,7 @@
 class GetAllAvailableSeatsForMovieAndTheater : public MovieSessionVisitor
 {
 public:
-    explicit GetAllAvailableSeatsForMovieAndTheater(std::string_view theater,std::string_view movie, std::span<std::string> out);
+    explicit GetAllAvailableSeatsForMovieAndTheater(std::string_view movie,std::string_view theater, std::span<std::string> out);
     ~GetAllAvailableSeatsForMovieAndTheater() override = default;
 
 private:

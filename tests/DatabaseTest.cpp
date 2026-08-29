@@ -3,9 +3,11 @@
 #include <string>
 #include <ranges>
 #include <format>
+#include <algorithm>
 #include "AddMovie.hpp"
 #include "GetAllMovies.hpp"
 #include "GetAllTheaterShowingTheMovie.hpp"
+#include "GetAllAvailableSeatsForMovieAndTheater.hpp"
 
 void expect(bool condition, const std::string& message)
 {
@@ -82,6 +84,48 @@ void db_GetAllTheaterShowingTheMovie()
     expect(result == theaterName, std::format("Theather Name differ from expected. Expected({}) Found({})", theaterName, result));
 
 }
+
+void db_getAllAvailableSeats()
+{
+    constexpr std::string_view movieName = "The Dark Knight";
+    constexpr std::string_view theaterName = "Cineplex";
+
+    auto movie = MovieScreening::create(
+        "movie-id-1",
+        "theater-id-1",
+        std::string{movieName},
+        std::string{theaterName});
+
+    // Adiciona movie à database...
+
+    std::array<std::string, 20> seats{};
+
+    GetAllAvailableSeatsForMovieAndTheater operation{
+        movieName,
+        theaterName,
+        seats};
+
+    expect(
+        operation.Execute() == DatabaseError::OK,
+        "Failed to get available seats");
+
+    auto containsSeat = [&](std::string_view expected)
+    {
+        return std::ranges::any_of(
+            seats,
+            [expected](const auto& seat)
+            {
+                return seat == expected;
+            });
+    }
+    ;
+    for (const auto& [seat, available] : movie->m_availableSeats)
+    {
+        expect(containsSeat(seat), "Test setup contains unavailable seat");
+    }
+
+}
+
 void run(const char* name, void (*test)(), int& failures)
 {
     try
@@ -101,5 +145,6 @@ int main()
     int failures = 0;
     run("Simple add and get operations", db_addAndGetMovie, failures);
     run("Getting all theaters showing the movie", db_GetAllTheaterShowingTheMovie, failures);
+    run("Getting all available seats for the movie", db_getAllAvailableSeats, failures);
     return failures == 0 ? 0 : 1;
 }

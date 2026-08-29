@@ -1,6 +1,6 @@
 #include "GetAllAvailableSeatsForMovieAndTheater.hpp"
 
-GetAllAvailableSeatsForMovieAndTheater::GetAllAvailableSeatsForMovieAndTheater(std::string_view theater,std::string_view movie, std::span<std::string> out)
+GetAllAvailableSeatsForMovieAndTheater::GetAllAvailableSeatsForMovieAndTheater(std::string_view movie,std::string_view theater, std::span<std::string> out)
     : m_outData(out), m_movieName(movie), m_theaterName(theater)
 {
     m_isFinished = false;
