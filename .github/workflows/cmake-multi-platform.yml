@@ -20,9 +20,9 @@ jobs:
           - name: Linux GCC 14
             os: ubuntu-latest
             compiler: gcc
-          - name: Linux Clang
-            os: ubuntu-latest
-            compiler: clang
+          - name: Windows MinGW
+            os: windows-latest
+            compiler: mingw
           - name: macOS Apple Clang
             os: macos-latest
             compiler: apple-clang
@@ -50,14 +50,27 @@ jobs:
             -DCMAKE_CXX_EXTENSIONS=OFF \
             -DCMAKE_BUILD_TYPE=Release
 
-      - name: Configure Clang
-        if: matrix.compiler == 'clang'
+      - name: Set up MSYS2 MinGW
+        if: matrix.compiler == 'mingw'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: mingw64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            make
+
+      - name: Configure Windows MinGW
+        if: matrix.compiler == 'mingw'
+        shell: msys2 {0}
         run: |
           cmake \
             -S . \
             -B build \
-            -DCMAKE_C_COMPILER=clang \
-            -DCMAKE_CXX_COMPILER=clang++ \
+            -G "MinGW Makefiles" \
+            -DCMAKE_C_COMPILER=gcc \
+            -DCMAKE_CXX_COMPILER=g++ \
             -DCMAKE_CXX_STANDARD=23 \
             -DCMAKE_CXX_STANDARD_REQUIRED=ON \
             -DCMAKE_CXX_EXTENSIONS=OFF \
