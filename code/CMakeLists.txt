@@ -15,6 +15,7 @@ endif()
 
 set(BOOKING_SERVICE_INCLUDE_DIRS
     "${CMAKE_SOURCE_DIR}/code/include"
+    "${CMAKE_SOURCE_DIR}/code/include/Application"
     "${CMAKE_SOURCE_DIR}/code/include/MovieSessionDatabase"
     "${CMAKE_SOURCE_DIR}/code/include/MovieSessionDatabase/Operations"
     "${CMAKE_SOURCE_DIR}/code/include/MovieSessionDatabase/Operations/Set"
