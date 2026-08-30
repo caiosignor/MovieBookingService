@@ -1,5 +1,25 @@
 # Theater Booking Service
 
+## Table of Contents
+
+- [Summary](#summary)
+- [How the software works](#how-the-software-works)
+- [Supported commands](#supported-commands)
+- [Project structure](#project-structure)
+- [Prerequisites](#prerequisites)
+- [Build](#build)
+- [Run the server](#run-the-server)
+- [Sending commands from the terminal](#sending-commands-from-the-terminal)
+- [Example client conversation](#example-client-conversation)
+- [Docker](#docker)
+- [GitHub Actions](#github-actions)
+- [Testing](#testing)
+- [Real concurrency test in Python](#real-concurrency-test-in-python)
+- [Troubleshooting](#troubleshooting)
+- [Notes](#notes)
+
+## Summary
+
 This project is a UDP-based booking service for movies, theaters, and seat reservations. The application listens on a UDP socket, decodes text commands, stores session state per client, and schedules operations on a thread pool for execution.
 
 The system is designed to support multiple clients concurrently, while keeping a per-session state and using a single in-memory database instance for movie and seat data.
@@ -319,6 +339,45 @@ cmake -S . -B build
 cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 ```
+
+## Real concurrency test in Python
+
+The repository also includes a real end-to-end validation script at [tests/testApplication.py](tests/testApplication.py). This script does not mock the booking logic: it starts the actual UDP server as a subprocess, launches 10 client threads in parallel, and makes all of them try to book the same seat at the "same time".
+
+What the script validates:
+
+- the binary starts correctly from the command line
+- the server listens on the configured host and port
+- multiple clients can request the same seat concurrently
+- only one reservation succeeds, while the others receive a seat-unavailable response
+
+Execution from the project root:
+
+```bash
+python3 tests/testApplication.py
+```
+
+The script expects the compiled executable to exist at:
+
+```bash
+../build/bin/BookingServiceExecutable
+```
+
+If the binary is not present yet, build the project first:
+
+```bash
+cmake -S . -B build
+cmake --build build --parallel
+```
+
+A successful run ends without errors and prints a summary such as:
+
+```text
+successful=1
+failed=9
+```
+
+This means the race condition is correctly enforced and only one client wins the booking for the same seat.
 
 ## Troubleshooting
 
