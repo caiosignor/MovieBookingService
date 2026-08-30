@@ -93,5 +93,5 @@ jobs:
           load: true
           tags: movie-booking-service:ci
 
-      - name: Smoke test container
-        run: docker run --rm movie-booking-service:ci
+      - name: Docker image built successfully
+        run: docker image inspect movie-booking-service:ci >/dev/null

@@ -43,4 +43,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends libstdc++6 \
 WORKDIR /app
 COPY --from=builder /src/build/bin/BookingServiceExecutable ./BookingServiceExecutable
 
+ENV APP_HOST=0.0.0.0
+ENV APP_PORT=9000
+
+EXPOSE 9000/udp
+
 ENTRYPOINT ["./BookingServiceExecutable"]
+CMD ["--host", "0.0.0.0", "--port", "9000"]

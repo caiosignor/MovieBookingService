@@ -1,16 +1,17 @@
 #pragma once
 
+#include <functional>
+#include <optional>
 #include <string>
-#include <vector>
-#include <expected>
 #include <string_view>
+#include <vector>
+
+#include "Application/UserSessionManager.hpp"
 
 enum class CommandType {
     GetMovies,
     SelectMovie,
-    GetTheaters,
     SelectTheater,
-    GetSeats,
     Book
 };
 
@@ -31,6 +32,7 @@ public:
     DEXDecode();
     ~DEXDecode();
 
-    std::expected<DEXCommand, DecodeError> decode(std::string_view commandStr);
+    std::optional<DEXCommand> decode(std::string_view commandStr);
     std::vector<std::string> decodeDEX(std::string_view commands);
+    std::optional<std::function<std::string(UserSession&)>> makeOperation(const DEXCommand& command) const;
 };

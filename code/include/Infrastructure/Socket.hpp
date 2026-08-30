@@ -2,7 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <expected>
+#include <optional>
 #include <span>
 #include <string>
 #include <string_view>
@@ -61,7 +61,7 @@ public:
   Socket &operator=(Socket &&other) noexcept;
   ~Socket();
 
-  [[nodiscard]] static std::expected<Socket, Error>
+  [[nodiscard]] static std::optional<Socket>
   connect(std::string_view address, uint16_t port);
 
   void close() noexcept;
@@ -70,10 +70,10 @@ public:
   [[nodiscard]] std::string_view address() const noexcept { return m_address; }
   [[nodiscard]] uint16_t port() const noexcept { return m_port; }
 
-  [[nodiscard]] std::expected<std::size_t, Error>
+  [[nodiscard]] std::optional<std::size_t>
   sendTo(std::span<const std::byte> data, const Peer &peer);
 
-  [[nodiscard]] std::expected<Datagram, Error>
+  [[nodiscard]] std::optional<Datagram>
   receiveFrom(std::span<std::byte> buffer);
 
 private:

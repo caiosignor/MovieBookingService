@@ -45,3 +45,27 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ProtocolDecoder/ProtocolDecoderTests.cpp"
 else()
     message(STATUS "No protocol decoder test source found; skipping ProtocolDecoderTests target.")
 endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Application/ApplicationTests.cpp")
+    add_executable(ApplicationTests
+        Application/ApplicationTests.cpp
+    )
+
+    target_include_directories(ApplicationTests
+        PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+
+    target_link_libraries(ApplicationTests
+        PRIVATE
+            BookingServiceCore
+            project_warnings
+            project_sanitizers
+    )
+
+    target_compile_features(ApplicationTests PRIVATE cxx_std_23)
+
+    add_test(NAME ApplicationTests COMMAND ApplicationTests)
+else()
+    message(STATUS "No application test source found; skipping ApplicationTests target.")
+endif()
