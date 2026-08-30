@@ -45,6 +45,23 @@ std::string joinMovies(std::span<const MovieScreening> movies)
     }
     return result;
 }
+
+std::string joinTheaters(std::span<const std::string> Theaters)
+{
+    std::string result;
+    if(!Theaters[0].empty())
+    {
+        result = Theaters[0];
+    }
+
+    for (std::size_t i = 1; i < Theaters.size(); ++i) {
+        if (!Theaters[i].empty()) {
+            result += "| ";
+            result += Theaters[i];
+        }
+    }
+    return result;
+}
 } // namespace
 
 DEXDecode::DEXDecode() {}
@@ -117,7 +134,7 @@ std::optional<std::function<std::string(UserSession&)>> DEXDecode::makeOperation
                 return "ERROR:MOVIE IS NOT ON SCREEN";
             }
             session.request.selectedMovie = movieName;
-            return "THEATERS:" + joinSeats(std::span<const std::string>(theaters));
+            return "THEATERS:" + joinTheaters(std::span<const std::string>(theaters));
         };
     }
     case CommandType::SelectTheater: {
