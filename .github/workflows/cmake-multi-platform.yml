@@ -59,7 +59,7 @@ jobs:
           install: >-
             mingw-w64-x86_64-gcc
             mingw-w64-x86_64-cmake
-            make
+            mingw-w64-x86_64-make
 
       - name: Configure Windows MinGW
         if: matrix.compiler == 'mingw'
@@ -69,8 +69,9 @@ jobs:
             -S . \
             -B build \
             -G "MinGW Makefiles" \
-            -DCMAKE_C_COMPILER=gcc \
-            -DCMAKE_CXX_COMPILER=g++ \
+            -DCMAKE_MAKE_PROGRAM=/mingw64/bin/mingw32-make.exe \
+            -DCMAKE_C_COMPILER=/mingw64/bin/gcc.exe \
+            -DCMAKE_CXX_COMPILER=/mingw64/bin/g++.exe \
             -DCMAKE_CXX_STANDARD=23 \
             -DCMAKE_CXX_STANDARD_REQUIRED=ON \
             -DCMAKE_CXX_EXTENSIONS=OFF \
@@ -97,9 +98,21 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
+        if: matrix.compiler != 'mingw'
+        run: cmake --build build --config Release --parallel
+
+      - name: Build Windows MinGW
+        if: matrix.compiler == 'mingw'
+        shell: msys2 {0}
         run: cmake --build build --config Release --parallel
 
       - name: Test
+        if: matrix.compiler != 'mingw'
+        run: ctest --test-dir build --build-config Release --output-on-failure
+
+      - name: Test Windows MinGW
+        if: matrix.compiler == 'mingw'
+        shell: msys2 {0}
         run: ctest --test-dir build --build-config Release --output-on-failure
 
   docker-build:
