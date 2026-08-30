@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <utility>
 #include <vector>
@@ -75,4 +76,5 @@ public:
 private:
     static constexpr std::size_t DATABASE_CAPACITY = 20;
     std::vector<MovieScreeningPtrType> m_screeningMovies;
+    std::mutex m_mutex;
 };
