@@ -87,7 +87,7 @@ cmake --build build --parallel
 
 ## Run the server
 
-Start the application:
+Start the application with the default values:
 
 ```bash
 ./build/bin/BookingServiceExecutable
@@ -95,10 +95,23 @@ Start the application:
 
 The default bind address is 127.0.0.1 and the default UDP port is 9000.
 
+You can override both values explicitly:
+
+```bash
+./build/bin/BookingServiceExecutable --host 127.0.0.1 --port 9000
+./build/bin/BookingServiceExecutable --host 0.0.0.0 --port 9001
+```
+
+You can also use the short form:
+
+```bash
+./build/bin/BookingServiceExecutable -p 9000 --host 0.0.0.0
+```
+
 If you want to keep it running in the background, use:
 
 ```bash
-./build/bin/BookingServiceExecutable > server.log 2>&1 &
+./build/bin/BookingServiceExecutable --host 0.0.0.0 --port 9000 > server.log 2>&1 &
 ```
 
 ## Sending commands from the terminal
@@ -210,19 +223,46 @@ This Dockerfile uses a multi-stage build:
 
 ### Run the container
 
-Run the server in a container:
+Run the server in a container with the default bind address and port:
 
 ```bash
 docker run --rm -p 9000:9000/udp --name theater-booking-service theater-booking-service
 ```
 
-This exposes UDP port 9000 from the container to the host. The service listens on 127.0.0.1 inside the container and accepts commands over UDP.
+This exposes UDP port 9000 from the container to the host. The runtime container starts the app with:
+
+```bash
+--host 0.0.0.0 --port 9000
+```
+
+You can also override the bind address and port at runtime:
+
+```bash
+docker run --rm -p 9001:9001/udp --name theater-booking-service theater-booking-service --host 0.0.0.0 --port 9001
+```
 
 ### Run the container in detached mode
 
 ```bash
 docker run -d --rm -p 9000:9000/udp --name theater-booking-service theater-booking-service
 ```
+
+### Container environment variables
+
+The image also defines environment variables for the runtime:
+
+```bash
+APP_HOST=0.0.0.0
+APP_PORT=9000
+```
+
+If you want to override them when running the container, you can use:
+
+```bash
+docker run --rm -e APP_HOST=0.0.0.0 -e APP_PORT=9000 -p 9000:9000/udp theater-booking-service
+```
+
+The container entrypoint still passes the standard arguments to the binary, so the default runtime behavior remains consistent.
 
 ### Rebuild after source changes
 
