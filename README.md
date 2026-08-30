@@ -1,223 +1,243 @@
 # Theater Booking Service
 
+A small UDP based backend service for booking movie theater seats.
+
+The service receives commands through UDP, keeps the current session state for each client and processes requests using a thread pool.
+
+The movie and theater data is kept in memory.
+
 ## Table of Contents
 
 - [Summary](#summary)
-- [How the software works](#how-the-software-works)
-- [Supported commands](#supported-commands)
+- [How it works](#how-it-works)
+- [Commands](#commands)
 - [Project structure](#project-structure)
-- [Prerequisites](#prerequisites)
+- [Requirements](#requirements)
 - [Build](#build)
-- [Run the server](#run-the-server)
-- [Sending commands from the terminal](#sending-commands-from-the-terminal)
-- [Example client conversation](#example-client-conversation)
+- [Running](#running)
+- [Sending commands](#sending-commands)
+- [Example](#example)
 - [Docker](#docker)
 - [GitHub Actions](#github-actions)
-- [Testing](#testing)
-- [Real concurrency test in Python](#real-concurrency-test-in-python)
+- [Tests](#tests)
+- [Concurrency test](#concurrency-test)
 - [Troubleshooting](#troubleshooting)
 - [Notes](#notes)
 
 ## Summary
 
-This project is a UDP-based booking service for movies, theaters, and seat reservations. The application listens on a UDP socket, decodes text commands, stores session state per client, and schedules operations on a thread pool for execution.
+The project is a UDP based booking service for movies, theaters and seats.
 
-The system is designed to support multiple clients concurrently, while keeping a per-session state and using a single in-memory database instance for movie and seat data.
+The server receives commands, keeps the state of each client session and uses a thread pool to process requests.
 
-## How the software works
+The data is not persisted. Everything is kept in memory while the application is running.
 
-The runtime is organized in a few main layers:
+## How it works
 
-- Application: owns the UDP socket and the main loop
-- UserSessionManager: stores user state by session id
-- DEXDecode: parses textual commands into executable operations
-- ThreadPool: executes queued tasks asynchronously
-- MovieSessionDatabase: keeps the in-memory movie and seat data
+The main parts of the application are:
 
-The request flow is:
+- `Application` - owns the UDP socket and receives requests
+- `UserSessionManager` - keeps the state for each session
+- `DEXDecode` - parses the received commands
+- `ThreadPool` - executes the requests
+- `MovieSessionDatabase` - stores movies, theaters and seats
 
-1. The server receives a UDP datagram.
-2. The payload is decoded as a command such as SELECT_MOVIE or BOOK.
-3. The command is translated into a callable operation.
-4. The operation is added to the thread pool queue.
-5. The thread pool executes it later, updating the session and/or database.
-6. The application sends the response back to the sender UDP port.
+The basic flow is:
 
-This makes the server suitable for concurrent workloads without forcing each client to block in the receive loop.
+1. Receive a UDP packet.
+2. Decode the command.
+3. Create the operation for that command.
+4. Put it in the thread pool.
+5. Execute the operation.
+6. Send the response back to the client.
 
-## Supported commands
+The receive loop doesn't have to wait for each request to finish.
 
-The application accepts commands in this format:
+## Commands
 
-- session_id GET_MOVIES
-- session_id SELECT_MOVIE MovieName
-- session_id SELECT_THEATER TheaterName
-- session_id BOOK Seat1 Seat2
+Commands have the following format:
 
-Examples:
+```text
+session_id GET_MOVIES
+session_id SELECT_MOVIE MovieName
+session_id SELECT_THEATER TheaterName
+session_id BOOK Seat1 Seat2
+```
 
-- client-1 GET_MOVIES
-- client-1 SELECT_MOVIE Inception
-- client-1 SELECT_THEATER Cinema 1
-- client-1 BOOK A1 A2
+For example:
 
-The application responds with strings such as:
+```text
+client-1 GET_MOVIES
+client-1 SELECT_MOVIE Inception
+client-1 SELECT_THEATER Cinema 1
+client-1 BOOK A1 A2
+```
 
-- MOVIES:Inception|TheMatrix
-- THEATERS:IMAX|Cinema 2
-- SEATS:A1|A2|A3
-- BOOKED
-- ERROR:INVALID_COMMAND
-- ERROR:GET_MOVIES
-- ERROR:SEAT_UNAVAILABLE
+Some possible responses:
+
+```text
+MOVIES:Inception|TheMatrix
+THEATERS:IMAX|Cinema 2
+SEATS:A1|A2|A3
+BOOKED
+ERROR:INVALID_COMMAND
+ERROR:GET_MOVIES
+ERROR:SEAT_UNAVAILABLE
+```
 
 ## Project structure
 
-- code/include: public headers
-- code/src: implementation files
-- tests: automated tests for database, protocol decoding, and application flows
+```text
+code/include    public headers
+code/src        source files
+tests           tests
+```
 
-The main executable is built into:
+The executable is generated at:
 
-- build/bin/BookingServiceExecutable
+```text
+build/bin/BookingServiceExecutable
+```
 
-## Prerequisites
+## Requirements
 
-On Linux and macOS, you need:
+You'll need:
 
-- CMake 3.20 or newer
-- a modern C++ compiler such as GCC, Clang, or Apple Clang
-- standard Unix socket support
+- CMake 3.20+
+- GCC, Clang or Apple Clang
+- UDP socket support
+
+No external libraries are required.
 
 ## Build
 
-From the project root:
+From the project directory:
 
 ```bash
 cmake -S . -B build
 cmake --build build --parallel
 ```
 
-You can also build in Release mode if desired:
+For a Release build:
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
 ```
 
-## Run the server
+## Running
 
-Start the application with the default values:
+The default address and port are:
+
+```text
+127.0.0.1:9000
+```
+
+Run it with:
 
 ```bash
 ./build/bin/BookingServiceExecutable
 ```
 
-The default bind address is 127.0.0.1 and the default UDP port is 9000.
-
-You can override both values explicitly:
+Or specify them:
 
 ```bash
 ./build/bin/BookingServiceExecutable --host 127.0.0.1 --port 9000
+```
+
+For example:
+
+```bash
 ./build/bin/BookingServiceExecutable --host 0.0.0.0 --port 9001
 ```
 
-You can also use the short form:
+Short port option is also available:
 
 ```bash
 ./build/bin/BookingServiceExecutable -p 9000 --host 0.0.0.0
 ```
 
-If you want to keep it running in the background, use:
+To run it in the background:
 
 ```bash
 ./build/bin/BookingServiceExecutable --host 0.0.0.0 --port 9000 > server.log 2>&1 &
 ```
 
-## Sending commands from the terminal
+## Sending commands
 
-Because this is a UDP socket service, the client side usually sends a datagram and reads the response from the socket that it opened for receiving.
+Since the server uses UDP, you can use `nc` for some quick tests.
 
-### Using printf
-
-You can send a single command directly with printf:
+For example:
 
 ```bash
 printf '%s' 'client-1 SELECT_MOVIE Inception' | nc -u -w 1 127.0.0.1 9000
 ```
 
-This sends the packet, but the server response will only be visible if the sender is also listening on a UDP port to receive it.
+Depending on the `nc` version, receiving the response is easier if the client uses a fixed source port.
 
-### Using nc and a listener port
-
-This is the most practical pattern for testing in Linux and macOS.
-
-Terminal 1: start a UDP listener on a local port:
+Start a listener:
 
 ```bash
 nc -u -l -k 127.0.0.1 9999
 ```
 
-Terminal 2: send a command from source port 9999 so the server replies back to that port:
+Then send the command using port `9999`:
 
 ```bash
 printf '%s' 'client-1 SELECT_MOVIE Inception' | nc -u -w 1 -p 9999 127.0.0.1 9000
 ```
 
-The server will answer to the sender port, and the listening socket on 9999 will receive the response.
+The server sends the response to the source port of the request.
 
-### Using nc for booking
+For a booking:
 
 ```bash
 printf '%s' 'client-1 SELECT_THEATER Cinema 1' | nc -u -w 1 -p 9999 127.0.0.1 9000
+
 printf '%s' 'client-1 BOOK A1' | nc -u -w 1 -p 9999 127.0.0.1 9000
 ```
 
-### Using bash /dev/udp
-
-On Linux, bash can also send UDP traffic without nc:
+On Linux, another quick option is `/dev/udp`:
 
 ```bash
 printf '%s' 'client-1 GET_MOVIES' >/dev/udp/127.0.0.1/9000
 ```
 
-This is handy for quick smoke tests, but it is less convenient for receiving the reply.
+This is mostly useful for sending packets. It's not very convenient for reading the response.
 
-## Example client conversation
+## Example
 
-A typical interaction looks like this:
-
-1. Send a movie selection:
+Select a movie:
 
 ```bash
 printf '%s' 'client-1 SELECT_MOVIE Inception' | nc -u -w 1 -p 9999 127.0.0.1 9000
 ```
 
-Expected response:
+Response:
 
 ```text
 THEATERS:IMAX
 ```
 
-2. Select a theater:
+Then select the theater:
 
 ```bash
 printf '%s' 'client-1 SELECT_THEATER IMAX' | nc -u -w 1 -p 9999 127.0.0.1 9000
 ```
 
-Expected response:
+Response:
 
 ```text
 SEATS:A1|A2|A3|...
 ```
 
-3. Book a seat:
+And book a seat:
 
 ```bash
 printf '%s' 'client-1 BOOK A1' | nc -u -w 1 -p 9999 127.0.0.1 9000
 ```
 
-Expected response:
+Response:
 
 ```text
 BOOKED
@@ -225,96 +245,85 @@ BOOKED
 
 ## Docker
 
-This project also supports building and running inside Docker.
+The project can also be built and run using Docker.
 
-### Build the image
-
-From the project root:
+Build the image:
 
 ```bash
 docker build -t theater-booking-service .
 ```
 
-This Dockerfile uses a multi-stage build:
+The Dockerfile uses multiple stages. The project is built first, the tests are run and the final image only contains what is needed to run the service.
 
-- builder: installs CMake and Ninja and compiles the project in Release mode
-- tester: runs the configured CTest suite inside the image
-- runtime: produces a smaller final image that contains only the executable
-
-### Run the container
-
-Run the server in a container with the default bind address and port:
+Run it:
 
 ```bash
-docker run --rm -p 9000:9000/udp --name theater-booking-service theater-booking-service
+docker run --rm \
+  -p 9000:9000/udp \
+  --name theater-booking-service \
+  theater-booking-service
 ```
 
-This exposes UDP port 9000 from the container to the host. The runtime container starts the app with:
+The container starts the server using:
 
-```bash
+```text
 --host 0.0.0.0 --port 9000
 ```
 
-You can also override the bind address and port at runtime:
+Another port can be used too:
 
 ```bash
-docker run --rm -p 9001:9001/udp --name theater-booking-service theater-booking-service --host 0.0.0.0 --port 9001
+docker run --rm \
+  -p 9001:9001/udp \
+  --name theater-booking-service \
+  theater-booking-service \
+  --host 0.0.0.0 --port 9001
 ```
 
-### Run the container in detached mode
+To run in background:
 
 ```bash
-docker run -d --rm -p 9000:9000/udp --name theater-booking-service theater-booking-service
+docker run -d --rm \
+  -p 9000:9000/udp \
+  --name theater-booking-service \
+  theater-booking-service
 ```
 
-### Container environment variables
+The image also defines:
 
-The image also defines environment variables for the runtime:
-
-```bash
+```text
 APP_HOST=0.0.0.0
 APP_PORT=9000
 ```
 
-If you want to override them when running the container, you can use:
+They can be changed when starting the container:
 
 ```bash
-docker run --rm -e APP_HOST=0.0.0.0 -e APP_PORT=9000 -p 9000:9000/udp theater-booking-service
+docker run --rm \
+  -e APP_HOST=0.0.0.0 \
+  -e APP_PORT=9000 \
+  -p 9000:9000/udp \
+  theater-booking-service
 ```
 
-The container entrypoint still passes the standard arguments to the binary, so the default runtime behavior remains consistent.
-
-### Rebuild after source changes
+If you want to rebuild everything from scratch:
 
 ```bash
 docker build --no-cache -t theater-booking-service .
 ```
 
-### Container notes
-
-- The service is meant to run as a UDP server and is not a web application.
-- The image compiles the project inside Docker, so the build process is fully reproducible in CI or local containers.
-- The runtime container uses the compiled binary directly, without requiring local toolchain installation.
-
 ## GitHub Actions
 
-This repository includes a GitHub Actions workflow for continuous integration.
+There is a GitHub Actions workflow that builds and tests the project on pushes and pull requests.
 
-The CI pipeline is intended to validate the project automatically on every push and pull request.
+The basic CI flow is:
 
-Typical flow:
+1. Checkout
+2. Configure CMake
+3. Build
+4. Run tests
 
-1. Checkout the repository
-2. Configure the build with CMake
-3. Compile the project
-4. Execute the CTest suite
-5. Fail the workflow if any tests or builds break
-
-The workflow is usually stored in:
-
-- .github/workflows/
-
-Example command used by CI:
+The commands are basically:
 
 ```bash
 cmake -S . -B build
@@ -322,17 +331,23 @@ cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 ```
 
-This ensures the project compiles in a clean environment and that the database, protocol decoder and application tests remain green over time.
+The workflow files are under:
 
-## Testing
+```text
+.github/workflows/
+```
 
-The project includes CTest-based tests. To run all tests:
+## Tests
+
+The project uses CTest.
+
+Run the tests with:
 
 ```bash
 ctest --test-dir build --output-on-failure
 ```
 
-Or build and run everything together:
+Or:
 
 ```bash
 cmake -S . -B build
@@ -340,55 +355,74 @@ cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 ```
 
-## Real concurrency test in Python
+There are tests for the database, command decoding and application behavior.
 
-The repository also includes a real end-to-end validation script at [tests/testApplication.py](tests/testApplication.py). This script does not mock the booking logic: it starts the actual UDP server as a subprocess, launches 10 client threads in parallel, and makes all of them try to book the same seat at the "same time".
+## Concurrency test
 
-What the script validates:
+There is also an end-to-end test in:
 
-- the binary starts correctly from the command line
-- the server listens on the configured host and port
-- multiple clients can request the same seat concurrently
-- only one reservation succeeds, while the others receive a seat-unavailable response
-
-Execution from the project root:
-
-```bash
-python3 tests/testApplication.py
+```text
+tests/testApplication.py
 ```
 
-The script expects the compiled executable to exist at:
+This one starts the actual server and creates 10 client threads. All clients try to book the same seat concurrently.
+
+The point of the test is to check that only one request manages to book the seat.
+
+It checks that:
+
+- the server starts correctly
+- the UDP socket is working
+- multiple clients can send requests at the same time
+- only one client can book the same seat
+
+Run it with in root project dir:
 
 ```bash
+cd tests
+python3 testApplication.py
+```
+
+The executable needs to have already been built.
+
+The test expects:
+
+```text
 ../build/bin/BookingServiceExecutable
 ```
 
-If the binary is not present yet, build the project first:
+If needed, build it first:
 
 ```bash
 cmake -S . -B build
 cmake --build build --parallel
 ```
 
-A successful run ends without errors and prints a summary such as:
+A successful test should result in something similar to:
 
 ```text
 successful=1
 failed=9
 ```
 
-This means the race condition is correctly enforced and only one client wins the booking for the same seat.
+The exact output can vary, but the important part is that only one booking succeeds.
 
 ## Troubleshooting
 
-- If the application does not start, confirm the port 9000 is not already in use.
-- If the client does not receive a response, make sure the sender socket is bound to a local port and is listening for UDP responses.
-- If commands are rejected, verify the session id is present and the selected movie or theater was chosen first.
-- If the server fails to book a seat, it usually means the seat is already reserved or the session has not selected the expected movie/theater.
+If the server doesn't start, check if port `9000` is already being used.
+
+If you don't get a response from the server, check that the client socket is using a source port where it can receive the UDP response.
+
+If a command is rejected, check the session id and make sure the movie/theater was selected before trying to book.
+
+If a booking fails with `SEAT_UNAVAILABLE`, the seat is probably already booked.
 
 ## Notes
 
-- This service is intentionally in-memory and does not persist data to disk.
-- The database is static inside the application lifetime.
-- The thread pool is used to decouple command processing from the socket receive loop.
-- The application does not include a CLI command parser or a command-line menu; it is socket-only.
+This is an in-memory service, so nothing is persisted when the application stops.
+
+The database lives for the lifetime of the application.
+
+The thread pool is mainly there so the UDP receive loop doesn't have to execute every request itself.
+
+There is no interactive CLI. The application is controlled through the UDP socket.

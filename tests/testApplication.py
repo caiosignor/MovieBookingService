@@ -52,7 +52,7 @@ def trigger_thread():
 
 def main():
     process = subprocess.Popen(
-        ["../build/bin/BookingServiceExecutable", "--host", HOST, "--port", str(PORT)],
+        [os.path.join("..","build","bin", "BookingServiceExecutable"), "--host", HOST, "--port", str(PORT)],
         cwd=os.getcwd(),
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
