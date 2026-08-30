@@ -236,6 +236,34 @@ docker build --no-cache -t theater-booking-service .
 - The image compiles the project inside Docker, so the build process is fully reproducible in CI or local containers.
 - The runtime container uses the compiled binary directly, without requiring local toolchain installation.
 
+## GitHub Actions
+
+This repository includes a GitHub Actions workflow for continuous integration.
+
+The CI pipeline is intended to validate the project automatically on every push and pull request.
+
+Typical flow:
+
+1. Checkout the repository
+2. Configure the build with CMake
+3. Compile the project
+4. Execute the CTest suite
+5. Fail the workflow if any tests or builds break
+
+The workflow is usually stored in:
+
+- .github/workflows/
+
+Example command used by CI:
+
+```bash
+cmake -S . -B build
+cmake --build build --parallel
+ctest --test-dir build --output-on-failure
+```
+
+This ensures the project compiles in a clean environment and that the database, protocol decoder and application tests remain green over time.
+
 ## Testing
 
 The project includes CTest-based tests. To run all tests:
