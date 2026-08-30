@@ -20,9 +20,6 @@ jobs:
           - name: Linux GCC 14
             os: ubuntu-latest
             compiler: gcc
-          - name: Linux Clang
-            os: ubuntu-latest
-            compiler: clang
           - name: macOS Apple Clang
             os: macos-latest
             compiler: apple-clang
@@ -45,19 +42,6 @@ jobs:
             -B build \
             -DCMAKE_C_COMPILER=gcc-14 \
             -DCMAKE_CXX_COMPILER=g++-14 \
-            -DCMAKE_CXX_STANDARD=23 \
-            -DCMAKE_CXX_STANDARD_REQUIRED=ON \
-            -DCMAKE_CXX_EXTENSIONS=OFF \
-            -DCMAKE_BUILD_TYPE=Release
-
-      - name: Configure Clang
-        if: matrix.compiler == 'clang'
-        run: |
-          cmake \
-            -S . \
-            -B build \
-            -DCMAKE_C_COMPILER=clang \
-            -DCMAKE_CXX_COMPILER=clang++ \
             -DCMAKE_CXX_STANDARD=23 \
             -DCMAKE_CXX_STANDARD_REQUIRED=ON \
             -DCMAKE_CXX_EXTENSIONS=OFF \

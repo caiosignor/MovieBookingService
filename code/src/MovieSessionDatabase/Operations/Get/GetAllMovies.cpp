@@ -3,7 +3,6 @@
 GetAllMovies::GetAllMovies(std::span<MovieScreening> out)
     : m_data(out)
 {
-    m_isFinished = false;
     m_retCode = DatabaseError::OK;
 }
 

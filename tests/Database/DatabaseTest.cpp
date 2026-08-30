@@ -10,15 +10,7 @@
 #include "GetAllAvailableSeatsForMovieAndTheater.hpp"
 #include "BookSeatForMovieAndTheater.hpp"
 #include "DatabaseTestData.hpp"
-
-
-void expect(bool condition, const std::string& message)
-{
-    if (!condition)
-    {
-        throw std::runtime_error(message);
-    }
-}
+#include "tests.hpp"
 
 void movieScreeningBuilder()
 {
@@ -190,18 +182,36 @@ void db_bookaSeat()
     }
 }
 
-void run(const char* name, void (*test)(), int& failures)
+void db_bookingAtomicity()
 {
-    try
-    {
-        test();
-        std::cout << "[PASS] " << name << '\n';
-    }
-    catch (const std::exception& error)
-    {
-        ++failures;
-        std::cerr << "[FAIL] " << name << ": " << error.what() << '\n';
-    }
+    MovieSessionDatabase dbInstance;
+    auto movie = MovieScreening::create(
+        std::string{TestData::MovieName},
+        std::string{TestData::TheaterName});
+
+    AddMovie operation(movie);
+    expect(operation.Execute(dbInstance) == DatabaseError::OK, "Failed to add movie!");
+
+    // First book "A1"
+    const auto firstSeatOnly = std::to_array<std::string_view>({"A1"});
+    BookSeatForMovieAndTheater firstBooking(TestData::MovieName, TestData::TheaterName, firstSeatOnly);
+    expect(firstBooking.Execute(dbInstance) == DatabaseError::OK, "Failed to book A1");
+
+    // Try booking {"A1", "A2"}. Since "A1" is already booked, this entire request must fail.
+    const auto attemptBoth = std::to_array<std::string_view>({"A1", "A2"});
+    BookSeatForMovieAndTheater secondBooking(TestData::MovieName, TestData::TheaterName, attemptBoth);
+    expect(secondBooking.Execute(dbInstance) == DatabaseError::SeatUnavailable, "Booking should fail because A1 is already booked");
+
+    // Now query available seats to ensure "A2" is STILL available (not partially booked)
+    std::array<std::string, 20> seats{};
+    GetAllAvailableSeatsForMovieAndTheater query{
+        TestData::MovieName,
+        TestData::TheaterName,
+        seats};
+    expect(query.Execute(dbInstance) == DatabaseError::OK, "Failed to get available seats");
+
+    auto it = std::find(seats.begin(), seats.end(), "A2");
+    expect(it != seats.end(), "A2 should still be available (rollback verification)");
 }
 
 int main()
@@ -214,5 +224,6 @@ int main()
     run("Getting all theaters showing the movie", db_GetAllTheaterShowingTheMovie, failures);
     run("Getting all available seats for the movie", db_getAllAvailableSeats, failures);
     run("Book a seat", db_bookaSeat, failures);
+    run("Atomic Booking Transaction", db_bookingAtomicity, failures);
     return failures == 0 ? 0 : 1;
 }

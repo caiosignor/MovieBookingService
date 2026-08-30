@@ -3,7 +3,6 @@
 GetAllTheaterShowingTheMovie::GetAllTheaterShowingTheMovie(std::string_view movie, std::span<std::string> out)
     : m_outData(out), m_movieName(movie)
 {
-    m_isFinished = false;
     m_retCode = DatabaseError::NotFound;
 }
 

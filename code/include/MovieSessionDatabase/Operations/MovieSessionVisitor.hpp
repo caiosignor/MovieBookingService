@@ -24,6 +24,6 @@ public:
     void finish() { m_isFinished = true; }
 
 protected:
-    bool m_isFinished{true};
+    bool m_isFinished{false};
     DatabaseError m_retCode{DatabaseError::OK};
 };
