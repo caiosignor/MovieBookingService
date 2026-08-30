@@ -8,6 +8,7 @@ MovieSessionDatabase::MovieSessionDatabase()
 
 void MovieSessionDatabase::accept(MovieSessionVisitor& visitor)
 {
+    std::lock_guard lock(m_mutex);
     visitor.visit(m_screeningMovies);
 
     for (const auto& movie : m_screeningMovies)

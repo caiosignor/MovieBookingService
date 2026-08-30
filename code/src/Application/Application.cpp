@@ -4,6 +4,7 @@
 #include <array>
 #include <stdexcept>
 #include <string_view>
+#include "AddMovie.hpp"
 
 namespace {
 std::string trim(std::string_view value)
@@ -28,6 +29,22 @@ Application::Application(uint16_t port, std::string_view host)
         throw std::runtime_error("Failed to bind UDP socket for the application.");
     }
     m_socket = std::move(const_cast<Socket&>(*socketResult));
+
+    //populate application database
+    constexpr auto Movies = std::to_array({
+        std::pair{std::string_view{"The Dark Knight"}, std::string_view{"Cineplex"}},
+        std::pair{std::string_view{"The Dark Knight"}, std::string_view{"IMAX"}},
+        std::pair{std::string_view{"Inception"}, std::string_view{"IMAX"}},
+        std::pair{std::string_view{"Interstellar"}, std::string_view{"Cinemark"}},
+        std::pair{std::string_view{"The Matrix"}, std::string_view{"AMC"}},
+        std::pair{std::string_view{"Pulp Fiction"}, std::string_view{"Regal"}}
+    });
+
+    for(auto m : Movies)
+    {
+        (void)
+        AddMovie(MovieScreening::create(std::string(m.first), std::string(m.second))).Execute();
+    }
 }
 
 Application::~Application() { m_running = false; }
