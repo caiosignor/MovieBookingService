@@ -10,15 +10,7 @@
 #include "GetAllAvailableSeatsForMovieAndTheater.hpp"
 #include "BookSeatForMovieAndTheater.hpp"
 #include "DatabaseTestData.hpp"
-
-
-void expect(bool condition, const std::string& message)
-{
-    if (!condition)
-    {
-        throw std::runtime_error(message);
-    }
-}
+#include "tests.hpp"
 
 void movieScreeningBuilder()
 {
@@ -220,20 +212,6 @@ void db_bookingAtomicity()
 
     auto it = std::find(seats.begin(), seats.end(), "A2");
     expect(it != seats.end(), "A2 should still be available (rollback verification)");
-}
-
-void run(const char* name, void (*test)(), int& failures)
-{
-    try
-    {
-        test();
-        std::cout << "[PASS] " << name << '\n';
-    }
-    catch (const std::exception& error)
-    {
-        ++failures;
-        std::cerr << "[FAIL] " << name << ": " << error.what() << '\n';
-    }
 }
 
 int main()
