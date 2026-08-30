@@ -65,12 +65,8 @@ std::optional<DEXCommand> DEXDecode::decode(std::string_view commandStr)
         type = CommandType::GetMovies;
     } else if (commandName == "SELECT_MOVIE") {
         type = CommandType::SelectMovie;
-    } else if (commandName == "GET_THEATERS") {
-        type = CommandType::GetTheaters;
     } else if (commandName == "SELECT_THEATER") {
         type = CommandType::SelectTheater;
-    } else if (commandName == "GET_SEATS") {
-        type = CommandType::GetSeats;
     } else if (commandName == "BOOK") {
         type = CommandType::Book;
     } else {
@@ -115,42 +111,27 @@ std::optional<std::function<std::string(UserSession&)>> DEXDecode::makeOperation
     case CommandType::SelectMovie: {
         const std::string movieName = joinArgs(command.args);
         return [movieName](UserSession& session) -> std::string {
-            session.request.selectedMovie = movieName;
-            return "OK";
-        };
-    }
-    case CommandType::GetTheaters: {
-        return [](UserSession& session) -> std::string {
             std::vector<std::string> theaters(64);
-            GetAllTheaterShowingTheMovie op{session.request.selectedMovie, std::span<std::string>(theaters)};
+            GetAllTheaterShowingTheMovie op{movieName, std::span<std::string>(theaters)};
             if (op.Execute() != DatabaseError::OK) {
-                return "ERROR:GET_THEATERS";
+                return "ERROR:MOVIE IS NOT ON SCREEN";
             }
+            session.request.selectedMovie = movieName;
             return "THEATERS:" + joinSeats(std::span<const std::string>(theaters));
         };
     }
     case CommandType::SelectTheater: {
         const std::string theaterName = joinArgs(command.args);
         return [theaterName](UserSession& session) -> std::string {
-            session.request.selectedTheater = theaterName;
-            return "OK";
-        };
-    }
-    case CommandType::GetSeats: {
-        return [](UserSession& session) -> std::string {
             std::vector<std::string> seats(64);
             GetAllAvailableSeatsForMovieAndTheater op{session.request.selectedMovie,
-                                                      session.request.selectedTheater,
+                                                      theaterName,
                                                       std::span<std::string>(seats)};
             if (op.Execute() != DatabaseError::OK) {
                 return "ERROR:GET_SEATS";
             }
             session.request.selectedSeats.clear();
-            for (const auto& seat : seats) {
-                if (!seat.empty()) {
-                    session.request.selectedSeats.push_back(seat);
-                }
-            }
+            session.request.selectedTheater = theaterName;
             return "SEATS:" + joinSeats(std::span<const std::string>(seats));
         };
     }

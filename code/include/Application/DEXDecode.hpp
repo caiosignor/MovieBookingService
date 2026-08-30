@@ -11,9 +11,7 @@
 enum class CommandType {
     GetMovies,
     SelectMovie,
-    GetTheaters,
     SelectTheater,
-    GetSeats,
     Book
 };
 
