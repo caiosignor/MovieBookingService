@@ -1,7 +1,7 @@
-#include <print>
+#include "Application/Application.hpp"
 
 int main()
 {
-    std::print("Hy");
-    return 0;
+    Application app;
+    return app.run();
 }

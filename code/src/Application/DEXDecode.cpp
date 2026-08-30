@@ -1,19 +1,65 @@
-#include "DEXDecode.hpp"
+#include "Application/DEXDecode.hpp"
+
 #include <sstream>
+#include <string>
+#include <vector>
+
+#include "BookSeatForMovieAndTheater.hpp"
+#include "GetAllAvailableSeatsForMovieAndTheater.hpp"
+#include "GetAllMovies.hpp"
+#include "GetAllTheaterShowingTheMovie.hpp"
+
+namespace {
+std::string joinArgs(const std::vector<std::string>& values)
+{
+    std::string result;
+    for (std::size_t i = 0; i < values.size(); ++i) {
+        if (i != 0) {
+            result += ' ';
+        }
+        result += values[i];
+    }
+    return result;
+}
+
+std::string joinSeats(std::span<const std::string> values)
+{
+    std::string result;
+    for (std::size_t i = 0; i < values.size(); ++i) {
+        if (i != 0) {
+            result += '|';
+        }
+        result += values[i];
+    }
+    return result;
+}
+
+std::string joinMovies(std::span<const MovieScreening> movies)
+{
+    std::string result;
+    for (std::size_t i = 0; i < movies.size(); ++i) {
+        if (i != 0) {
+            result += '|';
+        }
+        result += movies[i].movie_name;
+    }
+    return result;
+}
+} // namespace
 
 DEXDecode::DEXDecode() {}
 DEXDecode::~DEXDecode() {}
 
-std::expected<DEXCommand, DecodeError> DEXDecode::decode(std::string_view commandStr)
+std::optional<DEXCommand> DEXDecode::decode(std::string_view commandStr)
 {
     auto tokens = decodeDEX(commandStr);
     if (tokens.size() < 2) {
-        return std::unexpected(DecodeError::InvalidFormat);
+        return std::nullopt;
     }
 
-    std::string sessionId = tokens[0];
-    std::string commandName = tokens[1];
-    CommandType type;
+    const std::string sessionId = tokens[0];
+    const std::string commandName = tokens[1];
+    CommandType type{};
 
     if (commandName == "GET_MOVIES") {
         type = CommandType::GetMovies;
@@ -28,15 +74,15 @@ std::expected<DEXCommand, DecodeError> DEXDecode::decode(std::string_view comman
     } else if (commandName == "BOOK") {
         type = CommandType::Book;
     } else {
-        return std::unexpected(DecodeError::UnknownCommand);
+        return std::nullopt;
     }
 
     if ((type == CommandType::SelectMovie || type == CommandType::SelectTheater || type == CommandType::Book) && tokens.size() < 3) {
-        return std::unexpected(DecodeError::MissingArguments);
+        return std::nullopt;
     }
 
     std::vector<std::string> args;
-    for (size_t i = 2; i < tokens.size(); ++i) {
+    for (std::size_t i = 2; i < tokens.size(); ++i) {
         args.push_back(tokens[i]);
     }
 
@@ -47,6 +93,85 @@ std::vector<std::string> DEXDecode::decodeDEX(std::string_view commands)
 {
     std::istringstream input{std::string(commands)};
     std::vector<std::string> result;
-    for (std::string token; input >> token;) result.push_back(std::move(token));
+    for (std::string token; input >> token;) {
+        result.push_back(std::move(token));
+    }
     return result;
+}
+
+std::optional<std::function<std::string(UserSession&)>> DEXDecode::makeOperation(const DEXCommand& command) const
+{
+    switch (command.type) {
+    case CommandType::GetMovies: {
+        return [command](UserSession&) -> std::string {
+            std::vector<MovieScreening> movies(64);
+            GetAllMovies op{std::span<MovieScreening>(movies)};
+            if (op.Execute() != DatabaseError::OK) {
+                return "ERROR:GET_MOVIES";
+            }
+            return "MOVIES:" + joinMovies(std::span<const MovieScreening>(movies));
+        };
+    }
+    case CommandType::SelectMovie: {
+        const std::string movieName = joinArgs(command.args);
+        return [movieName](UserSession& session) -> std::string {
+            session.request.selectedMovie = movieName;
+            return "OK";
+        };
+    }
+    case CommandType::GetTheaters: {
+        return [](UserSession& session) -> std::string {
+            std::vector<std::string> theaters(64);
+            GetAllTheaterShowingTheMovie op{session.request.selectedMovie, std::span<std::string>(theaters)};
+            if (op.Execute() != DatabaseError::OK) {
+                return "ERROR:GET_THEATERS";
+            }
+            return "THEATERS:" + joinSeats(std::span<const std::string>(theaters));
+        };
+    }
+    case CommandType::SelectTheater: {
+        const std::string theaterName = joinArgs(command.args);
+        return [theaterName](UserSession& session) -> std::string {
+            session.request.selectedTheater = theaterName;
+            return "OK";
+        };
+    }
+    case CommandType::GetSeats: {
+        return [](UserSession& session) -> std::string {
+            std::vector<std::string> seats(64);
+            GetAllAvailableSeatsForMovieAndTheater op{session.request.selectedMovie,
+                                                      session.request.selectedTheater,
+                                                      std::span<std::string>(seats)};
+            if (op.Execute() != DatabaseError::OK) {
+                return "ERROR:GET_SEATS";
+            }
+            session.request.selectedSeats.clear();
+            for (const auto& seat : seats) {
+                if (!seat.empty()) {
+                    session.request.selectedSeats.push_back(seat);
+                }
+            }
+            return "SEATS:" + joinSeats(std::span<const std::string>(seats));
+        };
+    }
+    case CommandType::Book: {
+        const std::vector<std::string> requestedSeats = command.args;
+        return [requestedSeats](UserSession& session) -> std::string {
+            session.request.selectedSeats = requestedSeats;
+
+            std::vector<std::string_view> seats;
+            seats.reserve(requestedSeats.size());
+            for (const auto& seat : requestedSeats) {
+                seats.emplace_back(seat);
+            }
+
+            BookSeatForMovieAndTheater op{session.request.selectedMovie,
+                                          session.request.selectedTheater,
+                                          std::span<const std::string_view>(seats)};
+            return op.Execute() == DatabaseError::OK ? "BOOKED" : "ERROR:SEAT_UNAVAILABLE";
+        };
+    }
+    }
+
+    return std::nullopt;
 }
