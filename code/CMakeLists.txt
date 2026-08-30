@@ -21,6 +21,7 @@ set(BOOKING_SERVICE_INCLUDE_DIRS
     "${CMAKE_SOURCE_DIR}/code/include/MovieSessionDatabase/Operations/Set"
     "${CMAKE_SOURCE_DIR}/code/include/MovieSessionDatabase/Operations/Get"
     "${CMAKE_CURRENT_SOURCE_DIR}/src"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/Application"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/MovieSessionDatabase"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/MovieSessionDatabase/Operations"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/MovieSessionDatabase/Operations/Set"
