@@ -22,6 +22,7 @@ The movie and theater data is kept in memory.
 - [Tests](#tests)
 - [Concurrency test](#concurrency-test)
 - [Troubleshooting](#troubleshooting)
+- [Reflection](#reflection)
 - [Notes](#notes)
 
 ## Summary
@@ -416,6 +417,24 @@ If you don't get a response from the server, check that the client socket is usi
 If a command is rejected, check the session id and make sure the movie/theater was selected before trying to book.
 
 If a booking fails with `SEAT_UNAVAILABLE`, the seat is probably already booked.
+
+## Reflection
+
+### What aspect of this exercise did you find the most interesting?
+
+The most interesting part for me was designing the flow between the UDP receiver, session management and database operations. I liked seeing how a request is decoded, associated with a session and then processed asynchronously while handling multiple clients.
+
+I also found the Visitor pattern in the database layer interesting. The database owns the data and exposes the `accept` method, while each operation implements its logic through `MovieSessionVisitor` base class. This keeps the database focused on data and traversal, while each operation stays separated.
+
+I also liked this approach for testing. Each visitor can be tested independently using a dedicated database instance, or the static default instance when testing the application behavior. This makes it possible to test the operations without going through the entire UDP/session flow.
+
+Another interesting part was using GitHub Actions for CI. It automatically builds the software and runs the tests on different platforms, helping to make sure the project works consistently across environments.
+
+### What did you find most cumbersome?
+
+The most cumbersome part was keeping the state and validation consistent throughout the session flow. Each client needs to have the correct movie and theater selected before booking, so keeping track of each session required some care.
+
+The concurrency part was also challenging, especially making sure that simultaneous requests for the same seat don't result in an overbooking.
 
 ## Notes
 
