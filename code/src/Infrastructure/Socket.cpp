@@ -1,17 +1,46 @@
 #include "Infrastructure/Socket.hpp"
 
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#endif
+
 #include <utility>
 
-Socket::Socket(int fd, std::string address, uint16_t port) noexcept
+namespace {
+#ifdef _WIN32
+void initializeWinsock()
+{
+  static bool initialized = false;
+  if (!initialized) {
+    WSADATA data{};
+    (void)WSAStartup(MAKEWORD(2, 2), &data);
+    initialized = true;
+  }
+}
+#endif
+
+int socketClose(NativeSocket fd)
+{
+#ifdef _WIN32
+  return ::closesocket(fd);
+#else
+  return ::close(fd);
+#endif
+}
+} // namespace
+
+Socket::Socket(NativeSocket fd, std::string address, uint16_t port) noexcept
     : m_address{std::move(address)}, m_port{port}, m_fd{fd} {}
 
 Socket::Socket(Socket &&other) noexcept
     : m_address{std::move(other.m_address)}, m_port{other.m_port},
-      m_fd{std::exchange(other.m_fd, -1)} {}
+      m_fd{std::exchange(other.m_fd, kInvalidSocket)} {}
 
 // The class uses the operating system's UDP socket interface to receive and reply to packets.
 
@@ -21,7 +50,7 @@ Socket &Socket::operator=(Socket &&other) noexcept
     close();
     m_address = std::move(other.m_address);
     m_port = other.m_port;
-    m_fd = std::exchange(other.m_fd, -1);
+    m_fd = std::exchange(other.m_fd, kInvalidSocket);
   }
   return *this;
 }
@@ -30,8 +59,12 @@ Socket::~Socket() { close(); }
 
 std::optional<Socket> Socket::connect(std::string_view address, uint16_t port)
 {
-  const int fd = ::socket(AF_INET, SOCK_DGRAM, 0);
-  if (fd < 0) {
+#ifdef _WIN32
+  initializeWinsock();
+#endif
+
+  const NativeSocket fd = ::socket(AF_INET, SOCK_DGRAM, 0);
+  if (fd == kInvalidSocket) {
     return std::nullopt;
   }
 
@@ -41,12 +74,12 @@ std::optional<Socket> Socket::connect(std::string_view address, uint16_t port)
   };
 
   if (::inet_pton(AF_INET, std::string{address}.c_str(), &addr.sin_addr) != 1) {
-    ::close(fd);
+    socketClose(fd);
     return std::nullopt;
   }
 
   if (::bind(fd, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)) < 0) {
-    ::close(fd);
+    socketClose(fd);
     return std::nullopt;
   }
 
@@ -55,9 +88,9 @@ std::optional<Socket> Socket::connect(std::string_view address, uint16_t port)
 
 void Socket::close() noexcept
 {
-  if (m_fd >= 0) {
-    ::close(m_fd);
-    m_fd = -1;
+  if (m_fd != kInvalidSocket) {
+    socketClose(m_fd);
+    m_fd = kInvalidSocket;
   }
 }
 
@@ -76,9 +109,10 @@ std::optional<std::size_t> Socket::sendTo(std::span<const std::byte> data, const
     return std::nullopt;
   }
 
-  const ssize_t sent = ::sendto(m_fd, data.data(), data.size(), MSG_NOSIGNAL,
-                                reinterpret_cast<const sockaddr *>(&destination),
-                                sizeof(destination));
+  const int sent = ::sendto(m_fd, reinterpret_cast<const char *>(data.data()),
+                            static_cast<int>(data.size()), 0,
+                            reinterpret_cast<const sockaddr *>(&destination),
+                            sizeof(destination));
   if (sent < 0) {
     return std::nullopt;
   }
@@ -94,8 +128,9 @@ std::optional<Socket::Datagram> Socket::receiveFrom(std::span<std::byte> buffer)
 
   sockaddr_in sender{};
   socklen_t senderLength = sizeof(sender);
-  const ssize_t received = ::recvfrom(m_fd, buffer.data(), buffer.size(), 0,
-                                      reinterpret_cast<sockaddr *>(&sender), &senderLength);
+  const int received = ::recvfrom(m_fd, reinterpret_cast<char *>(buffer.data()),
+                                  static_cast<int>(buffer.size()), 0,
+                                  reinterpret_cast<sockaddr *>(&sender), &senderLength);
   if (received < 0) {
     return std::nullopt;
   }

@@ -44,11 +44,11 @@ void db_addAndGetMovie()
     expect(getAllOperation.Execute(dbInstance) == DatabaseError::OK, "Failed to get movies from database");
 
     auto firstMovie = movies[0];
-    expect(firstMovie.movie_name.compare(TestData::MovieName),
-        std::format("Retrieved different movie name from database. Expected{} Current{}",TestData::MovieName, firstMovie.movie_name));
+    expect(firstMovie.movie_name.compare(TestData::MovieName) == 0,
+        std::format("Retrieved different movie name from database. Expected {} Current {}", TestData::MovieName, firstMovie.movie_name));
 
-    expect(firstMovie.theater_name.compare(TestData::TheaterName),
-        std::format("Retrieved different movie name from database. Expected{} Current{}",TestData::TheaterName, firstMovie.theater_name));
+    expect(firstMovie.theater_name.compare(TestData::TheaterName) == 0,
+        std::format("Retrieved different theater name from database. Expected {} Current {}", TestData::TheaterName, firstMovie.theater_name));
 
     auto movie = MovieScreening::create(
         "Extra Movie",

@@ -7,6 +7,16 @@
 #include <string>
 #include <string_view>
 
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+using NativeSocket = SOCKET;
+constexpr NativeSocket kInvalidSocket = INVALID_SOCKET;
+#else
+using NativeSocket = int;
+constexpr NativeSocket kInvalidSocket = -1;
+#endif
+
 /**
  * @brief Minimal UDP socket wrapper used by the booking service.
  */
@@ -92,7 +102,7 @@ public:
    */
   void close() noexcept;
 
-  [[nodiscard]] bool is_open() const noexcept { return m_fd >= 0; }
+  [[nodiscard]] bool is_open() const noexcept { return m_fd != kInvalidSocket; }
   [[nodiscard]] std::string_view address() const noexcept { return m_address; }
   [[nodiscard]] uint16_t port() const noexcept { return m_port; }
 
@@ -114,9 +124,9 @@ public:
   receiveFrom(std::span<std::byte> buffer);
 
 private:
-  Socket(int fd, std::string address, uint16_t port) noexcept;
+  Socket(NativeSocket fd, std::string address, uint16_t port) noexcept;
 
   std::string m_address; ///< Bound local address.
   uint16_t m_port{};     ///< Bound local port.
-  int m_fd{-1};          ///< Native socket descriptor.
+  NativeSocket m_fd{kInvalidSocket}; ///< Native socket descriptor.
 };
