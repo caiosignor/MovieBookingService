@@ -4,6 +4,7 @@ ThreadPool::ThreadPool(std::size_t threadCount) {
   const std::size_t workerCount = std::max<std::size_t>(1, threadCount);
   m_workers.reserve(workerCount);
 
+  // Create N workers to process tasks in parallel without blocking the network loop.
   for (std::size_t i = 0; i < workerCount; ++i) {
     m_workers.emplace_back([this] { workerLoop(); });
   }

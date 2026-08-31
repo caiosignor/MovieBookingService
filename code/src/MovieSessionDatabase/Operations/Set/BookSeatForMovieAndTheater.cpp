@@ -9,10 +9,11 @@ BookSeatForMovieAndTheater::BookSeatForMovieAndTheater(const std::string_view mo
 
 void BookSeatForMovieAndTheater::visit(MovieScreeningPtrType movie)
 {
+    // Only modify the record that matches the movie and theater sent by the client.
     if (movie->movie_name.compare(m_movie) == 0 &&
         movie->theater_name.compare(m_theater) == 0)
     {
-        // First pass: Verify all requested seats are available
+        // First pass: validate that all requested seats are still available.
         for (const auto req : m_requestedSeat)
         {
             auto seat = movie->m_availableSeats.find(std::string{req});
@@ -24,7 +25,7 @@ void BookSeatForMovieAndTheater::visit(MovieScreeningPtrType movie)
             }
         }
 
-        // Second pass: Book all requested seats
+        // Second pass: mark all requested seats as occupied.
         for (const auto req : m_requestedSeat)
         {
             movie->m_availableSeats[std::string{req}] = false;

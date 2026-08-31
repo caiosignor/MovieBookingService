@@ -2,6 +2,7 @@
 
 std::shared_ptr<UserSession> UserSessionManager::getOrCreate(const std::string& sessionId)
 {
+    // Ensure session creation and lookup are thread-safe.
     std::lock_guard lock(m_mutex);
     auto it = m_sessions.find(sessionId);
     if (it != m_sessions.end()) {

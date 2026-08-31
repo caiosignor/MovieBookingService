@@ -69,6 +69,7 @@ DEXDecode::~DEXDecode() {}
 
 std::optional<DEXCommand> DEXDecode::decode(std::string_view commandStr)
 {
+    // Split the message into tokens to validate the protocol format.
     auto tokens = decodeDEX(commandStr);
     if (tokens.size() < 2) {
         return std::nullopt;
@@ -90,6 +91,7 @@ std::optional<DEXCommand> DEXDecode::decode(std::string_view commandStr)
         return std::nullopt;
     }
 
+    // Commands that require arguments must include at least one extra value.
     if ((type == CommandType::SelectMovie || type == CommandType::SelectTheater || type == CommandType::Book) && tokens.size() < 3) {
         return std::nullopt;
     }
@@ -117,6 +119,7 @@ std::optional<std::function<std::string(UserSession&)>> DEXDecode::makeOperation
     switch (command.type) {
     case CommandType::GetMovies: {
         return [command](UserSession&) -> std::string {
+            // Query the catalog of currently available movies.
             std::vector<MovieScreening> movies(64);
             GetAllMovies op{std::span<MovieScreening>(movies)};
             if (op.Execute() != DatabaseError::OK) {
@@ -128,6 +131,7 @@ std::optional<std::function<std::string(UserSession&)>> DEXDecode::makeOperation
     case CommandType::SelectMovie: {
         const std::string movieName = joinArgs(command.args);
         return [movieName](UserSession& session) -> std::string {
+            // Find all theaters currently showing the selected movie.
             std::vector<std::string> theaters(64);
             GetAllTheaterShowingTheMovie op{movieName, std::span<std::string>(theaters)};
             if (op.Execute() != DatabaseError::OK) {
@@ -140,6 +144,7 @@ std::optional<std::function<std::string(UserSession&)>> DEXDecode::makeOperation
     case CommandType::SelectTheater: {
         const std::string theaterName = joinArgs(command.args);
         return [theaterName](UserSession& session) -> std::string {
+            // After selecting the theater, look up the free seats for the current movie.
             std::vector<std::string> seats(64);
             GetAllAvailableSeatsForMovieAndTheater op{session.request.selectedMovie,
                                                       theaterName,
@@ -155,6 +160,7 @@ std::optional<std::function<std::string(UserSession&)>> DEXDecode::makeOperation
     case CommandType::Book: {
         const std::vector<std::string> requestedSeats = command.args;
         return [requestedSeats](UserSession& session) -> std::string {
+            // Save the current request and try to reserve the selected seats.
             session.request.selectedSeats = requestedSeats;
 
             std::vector<std::string_view> seats;

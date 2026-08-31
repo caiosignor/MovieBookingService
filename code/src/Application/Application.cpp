@@ -24,13 +24,14 @@ Application::Application(uint16_t port, std::string_view host)
       m_port(port),
       m_pool(std::max<std::size_t>(1U, std::thread::hardware_concurrency()))
 {
+    // Open the UDP socket for the server using the configured address.
     auto socketResult = Socket::connect(m_host, m_port);
     if (!socketResult) {
         throw std::runtime_error("Failed to bind UDP socket for the application.");
     }
     m_socket = std::move(const_cast<Socket&>(*socketResult));
 
-    //populate application database
+    // Seed the application database with sample movies.
     constexpr auto Movies = std::to_array({
         std::pair{std::string_view{"The Dark Knight"}, std::string_view{"Cineplex"}},
         std::pair{std::string_view{"The Dark Knight"}, std::string_view{"IMAX"}},
@@ -40,10 +41,9 @@ Application::Application(uint16_t port, std::string_view host)
         std::pair{std::string_view{"Pulp Fiction"}, std::string_view{"Regal"}}
     });
 
-    for(auto m : Movies)
-    {
-        (void)
-        AddMovie(MovieScreening::create(std::string(m.first), std::string(m.second))).Execute();
+    for (auto m : Movies) {
+        // Insert the sample movies into the in-memory database.
+        (void)AddMovie(MovieScreening::create(std::string(m.first), std::string(m.second))).Execute();
     }
 }
 
@@ -57,6 +57,7 @@ int Application::run()
 
     std::array<std::byte, 4096> buffer{};
     while (m_running) {
+        // Wait for the next UDP message and handle it immediately after.
         const auto packet = m_socket.receiveFrom(buffer);
         if (!packet) {
             continue;
@@ -71,6 +72,7 @@ int Application::run()
 
 void Application::processDatagram(const std::string& payload, const Socket::Peer& peer)
 {
+    // Remove extra whitespace to avoid empty or malformed commands.
     std::string commandText = trim(payload);
     if (commandText.empty()) {
         return;
@@ -87,7 +89,8 @@ void Application::processDatagram(const std::string& payload, const Socket::Peer
         sendResponse(peer, "ERROR:INVALID_COMMAND");
         return;
     }
-    
+
+    // Keep the client state in a session even when the operation runs in a worker thread.
     auto session = m_sessions.getOrCreate(decoded->session_id);
     const auto task = [this, peer, session, operation = std::move(*operation)]() mutable {
         const auto response = operation(*session);

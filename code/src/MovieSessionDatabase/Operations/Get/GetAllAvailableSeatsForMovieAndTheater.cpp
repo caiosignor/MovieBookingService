@@ -8,6 +8,7 @@ GetAllAvailableSeatsForMovieAndTheater::GetAllAvailableSeatsForMovieAndTheater(s
 
 void GetAllAvailableSeatsForMovieAndTheater::visit(MovieScreeningPtrType movie)
 {
+    // Check whether the current record matches the requested movie and theater.
     if (m_dataIterator >= m_outData.size())
     {
         finish();
@@ -17,6 +18,7 @@ void GetAllAvailableSeatsForMovieAndTheater::visit(MovieScreeningPtrType movie)
 
     if(movie->movie_name.compare(m_movieName) == 0 && movie->theater_name.compare(m_theaterName) ==0)
     {
+        // Collect all free seats for the matching movie and theater.
         for(const auto& [seat, isfree] : movie->m_availableSeats)
         {
             if(isfree)

@@ -13,6 +13,8 @@ Socket::Socket(Socket &&other) noexcept
     : m_address{std::move(other.m_address)}, m_port{other.m_port},
       m_fd{std::exchange(other.m_fd, -1)} {}
 
+// The class uses the operating system's UDP socket interface to receive and reply to packets.
+
 Socket &Socket::operator=(Socket &&other) noexcept
 {
   if (this != &other) {
