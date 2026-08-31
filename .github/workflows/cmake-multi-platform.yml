@@ -23,6 +23,9 @@ jobs:
           - name: macOS Apple Clang
             os: macos-latest
             compiler: apple-clang
+          - name: Windows MinGW
+            os: windows-latest
+            compiler: mingw
 
     steps:
       - name: Checkout
@@ -33,6 +36,14 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-14 g++-14
+
+      - name: Install MinGW
+        if: matrix.compiler == 'mingw'
+        shell: powershell
+        run: |
+          choco install mingw -y
+          $env:Path += ";C:\ProgramData\chocolatey\bin"
+          echo "$env:Path" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Configure GCC 14
         if: matrix.compiler == 'gcc'
@@ -65,6 +76,19 @@ jobs:
             -DCMAKE_CXX_STANDARD=23 \
             -DCMAKE_CXX_STANDARD_REQUIRED=ON \
             -DCMAKE_CXX_EXTENSIONS=OFF \
+            -DCMAKE_BUILD_TYPE=Release
+
+      - name: Configure Windows MinGW
+        if: matrix.compiler == 'mingw'
+        shell: bash
+        run: |
+          export PATH="/c/ProgramData/chocolatey/bin:$PATH"
+          cmake \
+            -S . \
+            -B build \
+            -G "MinGW Makefiles" \
+            -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
+            -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
             -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
