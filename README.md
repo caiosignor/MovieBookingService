@@ -126,6 +126,27 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
 ```
 
+### Windows with MinGW
+
+Install MinGW-w64 and make sure `x86_64-w64-mingw32-g++` is available in `PATH`.
+
+Then build from the project directory:
+
+```powershell
+cmake -S . -B build-mingw -G "MinGW Makefiles" ^
+  -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc ^
+  -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ ^
+  -DCMAKE_BUILD_TYPE=Release
+
+cmake --build build-mingw --parallel
+```
+
+The resulting binary is located at:
+
+```text
+build-mingw\bin\BookingServiceExecutable.exe
+```
+
 ## Running
 
 The default address and port are:
@@ -138,6 +159,12 @@ Run it with:
 
 ```bash
 ./build/bin/BookingServiceExecutable
+```
+
+On Windows:
+
+```powershell
+.\build-mingw\bin\BookingServiceExecutable.exe --host 127.0.0.1 --port 9000
 ```
 
 Or specify them:

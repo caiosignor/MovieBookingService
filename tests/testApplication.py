@@ -1,8 +1,10 @@
 import os
 import socket
 import subprocess
+import sys
 import threading
 import time
+from pathlib import Path
 
 HOST = "127.0.0.1"
 MOVIE = "Inception"
@@ -50,10 +52,32 @@ def trigger_thread():
     time.sleep(0.5)
     START_SIGNAL.set()
 
+def find_server_binary():
+    project_root = Path(__file__).resolve().parent.parent
+    candidates = [
+        project_root / "build" / "bin" / "BookingServiceExecutable",
+        project_root / "build" / "bin" / "BookingServiceExecutable.exe",
+        project_root / "build-gcc" / "bin" / "BookingServiceExecutable",
+        project_root / "build-gcc" / "bin" / "BookingServiceExecutable.exe",
+        project_root / "build-mingw" / "bin" / "BookingServiceExecutable.exe",
+        project_root / "build-mingw" / "bin" / "BookingServiceExecutable",
+    ]
+
+    for candidate in candidates:
+        if candidate.exists():
+            return str(candidate)
+
+    raise FileNotFoundError(
+        "Server binary not found. Expected one of: "
+        + ", ".join(str(path) for path in candidates)
+    )
+
+
 def main():
+    binary_path = find_server_binary()
     process = subprocess.Popen(
-        [os.path.join("..","build","bin", "BookingServiceExecutable"), "--host", HOST, "--port", str(PORT)],
-        cwd=os.getcwd(),
+        [binary_path, "--host", HOST, "--port", str(PORT)],
+        cwd=str(Path(__file__).resolve().parent.parent),
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
