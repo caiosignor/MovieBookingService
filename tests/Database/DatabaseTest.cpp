@@ -41,7 +41,7 @@ void db_addAndGetMovie()
     //get all movies from database
     std::array<MovieScreening, 20> movies{};
     GetAllMovies getAllOperation{movies};
-    expect(getAllOperation.Execute() == DatabaseError::OK, "Failed to get movies from database");
+    expect(getAllOperation.Execute(dbInstance) == DatabaseError::OK, "Failed to get movies from database");
 
     auto firstMovie = movies[0];
     expect(firstMovie.movie_name.compare(TestData::MovieName),
