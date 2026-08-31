@@ -68,6 +68,11 @@ target_link_libraries(BookingServiceExecutable
         project_sanitizers
 )
 
+if(WIN32)
+    target_link_libraries(BookingServiceCore PUBLIC ws2_32)
+    target_link_libraries(BookingServiceExecutable PRIVATE ws2_32)
+endif()
+
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_options(BookingServiceExecutable PRIVATE -static-libstdc++ -static-libgcc)
 endif()
